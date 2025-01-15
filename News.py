@@ -22,7 +22,7 @@ nltk.download('vader_lexicon')
 
 
 def fetch_rss_data():
-    keywords = ["Tesla", "Apple", "Amazon", "Google", "DraftKings"]
+    keywords = ["Tesla", "Apple", "Amazon", "Google", "DraftKings","NASA"]
     stock = input("Input a stock: ")
     url = requests.get(f'https://news.google.com/rss/search?q={stock}+stocks')
     soup = BeautifulSoup(url.content, 'xml')
@@ -62,4 +62,4 @@ def Vaderpreprocess_text():
     sns.lineplot(data=vaders, x='Published Date', y='compound')
     plt.show()
 
-#def Robertapreprocessing():
+
