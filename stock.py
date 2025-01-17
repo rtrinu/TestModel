@@ -32,8 +32,10 @@ class Stock:
         self.df['MACD'] = macd['MACD_12_26_9']
         self.df['MACD_signal'] = macd['MACDs_12_26_9']
         self.df['MACD_histogram'] = macd['MACDh_12_26_9']
-
+        self.df = self.df.fillna(method='ffill',inplace=True)
         self.save_to_csv('historical_data.csv')
+
+
 
     def save_to_csv(self, filename):
         if self.df is not None:
