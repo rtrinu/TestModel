@@ -10,6 +10,10 @@ class Stock:
         self.end_date = end_date
         self.df = None
 
+    def sp500_csv(self):
+        url = 'https://datahub.io/core/s-and-p-500-companies/r/constituents.csv'
+        sp500 = pd.read_csv(url)
+        sp500.to_csv('sp500_stocks.csv', index=False)
     def gather_data(self):
         self.df = yf.download("MSFT", start=self.start_date, end=self.end_date)
         self.df = pd.DataFrame(self.df)
