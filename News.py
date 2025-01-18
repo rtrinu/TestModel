@@ -18,7 +18,6 @@ from nltk.sentiment import SentimentIntensityAnalyzer
 
 
 def fetch_rss_data(stock):
-    keywords = ["Tesla", "Apple", "Amazon", "Google", "DraftKings","NASA"]
     url = requests.get(f'https://news.google.com/rss/search?q={stock}+stocks')
     soup = BeautifulSoup(url.content, 'xml')
     items = soup.find_all('item')
@@ -31,10 +30,9 @@ def fetch_rss_data(stock):
         title = item.title.text
         date = item.pubDate.text
         link = item.link.text
-        if any(keyword.lower() in title.lower() for keyword in keywords):
-            with open("stock_news.csv", "a", newline="", encoding="utf-8") as file:
-                writer = csv.writer(file)
-                writer.writerow([title, link, date])
+        with open("stock_news.csv", "a", newline="", encoding="utf-8") as file:
+            writer = csv.writer(file)
+            writer.writerow([title, link, date])
 
 
 def Vaderpreprocess_text():

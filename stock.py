@@ -11,7 +11,7 @@ class Stock:
         self.df = None
 
     def gather_data(self):
-        self.df = yf.download("MSFT", start=self.start_date, end=self.end_date)
+        self.df = yf.download(self.stock_symbol, start=self.start_date, end=self.end_date)
         self.df = pd.DataFrame(self.df)
         self.df.columns = self.df.columns.get_level_values(0)
         self.df.dropna()
