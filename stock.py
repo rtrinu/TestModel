@@ -10,10 +10,6 @@ class Stock:
         self.end_date = end_date
         self.df = None
 
-    def sp500_csv(self):
-        url = 'https://datahub.io/core/s-and-p-500-companies/r/constituents.csv'
-        sp500 = pd.read_csv(url)
-        sp500.to_csv('sp500_stocks.csv', index=False)
     def gather_data(self):
         self.df = yf.download("MSFT", start=self.start_date, end=self.end_date)
         self.df = pd.DataFrame(self.df)
@@ -32,7 +28,6 @@ class Stock:
         self.df['SMA_50'] = ta.sma(self.df['Close'], length=50)
         self.df['EMA_20'] = ta.ema(self.df['Close'], length=20)
         macd = ta.macd(self.df['Close'], length=14)
-        print(macd.head())
         self.df['MACD'] = macd['MACD_12_26_9']
         self.df['MACD_signal'] = macd['MACDs_12_26_9']
         self.df['MACD_histogram'] = macd['MACDh_12_26_9']

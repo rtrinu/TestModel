@@ -10,6 +10,13 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="\sp500_stocks.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="\stock_news.csv">
           <value>
             <Attribute>
