@@ -1,8 +1,9 @@
-from News import fetch_rss_data, Vaderpreprocess_text
+from News import fetch_rss_data, Vaderpreprocess_text, requests, get_news
 from stock import Stock
 import pandas as pd
 import feedparser
 import csv
+import datetime as dt
 
 
 def sp500_dict():
@@ -19,7 +20,7 @@ def check_user_stock(user_stock, stock_dict):
         stock_symbols = user_stock.upper()
         stock_name = stock_dict[stock_symbols]
         print(f"Stock symbol '{user_stock.upper()}' found: {stock_dict[user_stock.upper()]}")
-
+        return stock_symbols, stock_name
     elif any(user_stock.lower() in name.lower() for symbol, name in stock_dict.items()):
         for symbol, name in stock_dict.items():
             if user_stock.lower() in name.lower():
@@ -35,11 +36,17 @@ def check_user_stock(user_stock, stock_dict):
 stock_dict = sp500_dict()
 stock = input("Input a Stock or Stock Symbol: ")
 stock_symbol, stock_name = check_user_stock(stock, stock_dict)
-print(stock_name, stock_symbol)
-start_date = "2024-01-01"
-end_date = "2024-12-31"
-fetch_rss_data(stock_name)
+start_date = dt.datetime(2024,1,1)
+end_date = dt.datetime(2024,12,31)
+
 Vaderpreprocess_text()
-example = Stock(stock_symbol, start_date, end_date)
-example.gather_data()
+if stock_symbol is not None:
+    get_news(stock_symbol, start_date, end_date)
+    example = Stock(stock_symbol, start_date, end_date)
+    example.gather_data()
+    df1 = pd.read_csv('historical_data.csv')
+    historical_data_cols = df1[['Close','Open_Shifted','Close_Shifted']]
+    technical_indicator_cols = df1[['RSI','SMA_50','EMA_20','MACD']]
+    df1 = pd.read_csv('stock_news.csv')
+
 #example.add_technical_indicators()
