@@ -4,12 +4,14 @@ import pytz
 import requests
 from bs4 import BeautifulSoup
 import nltk
-from Keys import NewsAPI_Key
+from dotenv import load_dotenv
 import pandas as pd
 from datetime import datetime as dt, timedelta
 from nltk.sentiment import SentimentIntensityAnalyzer
 from newsapi import NewsApiClient
-import json
+import os
+
+
 
 # nltk.download('punkt')
 # nltk.download('punkt_tab')
@@ -19,8 +21,9 @@ import json
 # nltk.download('stopwords')
 # nltk.download('wordnet')
 # nltk.download('vader_lexicon')
-
-newsapi = NewsApiClient(NewsAPI_Key)
+load_dotenv()
+api_key = os.environ.get('NewsAPI_Key')
+newsapi = NewsApiClient(os.getenv(api_key))
 
 
 def news_fetch(symbol):

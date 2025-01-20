@@ -1,4 +1,4 @@
-from News import vaderpreprocess_text, news_fetch
+from News import vaderpreprocess_text, news_fetch, configure
 from stock import Stock
 import pandas as pd
 import datetime as dt
@@ -39,7 +39,7 @@ start_date = dt.datetime(2024, 1, 1)
 end_date = dt.datetime(2024, 12, 31)
 
 if stock_symbol is not None:
-    # fetch_rss_data(stock_name)
+    configure()
     news_fetch(stock_name)
     vaderpreprocess_text()
     example = Stock(stock_symbol, start_date, end_date)
