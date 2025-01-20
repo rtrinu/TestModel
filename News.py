@@ -37,6 +37,7 @@ def news_fetch(symbol):
         sort_by='publishedAt',
         page_size=1
     )
+    print(newsapi_response)
 
     news_data = []
     if newsapi_response.get('articles'):
@@ -46,7 +47,7 @@ def news_fetch(symbol):
             published_at = dt.strptime(published_at, "%Y-%m-%dT%H:%M:%SZ").strftime('%Y-%m-%d')
             news_data.append({
                 'Title': title,
-                'Published At': published_at
+                'Date': published_at
             })
 
     google_news_url = f'https://news.google.com/rss/search?q={symbol}+stocks'
@@ -60,10 +61,10 @@ def news_fetch(symbol):
         published_at = dt.strptime(published_at, "%a, %d %b %Y %H:%M:%S %Z").strftime('%Y-%m-%d')
         news_data.append({
             'Title': title,
-            'Published At': published_at
+            'Date': published_at
         })
 
-    news_data_sorted = sorted(news_data, key=lambda x: x['Published At'], reverse=True)
+    news_data_sorted = sorted(news_data, key=lambda x: x['Date'], reverse=True)
     df = pd.DataFrame(news_data_sorted)
 
     df.to_csv('stock_news.csv', index=False, quoting=1)
@@ -71,8 +72,6 @@ def news_fetch(symbol):
 
 def vaderpreprocess_text():
     df = pd.read_csv('stock_news.csv')
-    # if df.shape[0] > 100:
-    #    df = df.head(20)
     sia = SentimentIntensityAnalyzer()
     res = []
     for i, row in df.iterrows():

@@ -1,4 +1,4 @@
-from News import vaderpreprocess_text, news_fetch, configure
+from News import vaderpreprocess_text, news_fetch
 from stock import Stock
 import pandas as pd
 import datetime as dt
@@ -31,6 +31,16 @@ def check_user_stock(user_stock, stock_dict):
         print(f"Stock symbol or name '{user_stock}' not found in SP500.")
         return None, None
 
+def merge_by_month():
+    df1 = pd.read_csv('historical_data.csv')
+    df2 = pd.read_csv('stock_news.csv')
+    df1['Date'] = pd.to_datetime(df1['Date'])
+    df2['Date'] = pd.to_datetime(df2['Date'])
+    df1['year_month'] = df1['date'].dt.to_period('M')
+    df2['year_month'] = df2['date'].dt.to_period('M')
+    merged_df = pd.merge(df1, df2, on='year_month', how='inner')
+    merged_df = merged_df.drop(columns=['year_month'])
+    merged_df.to_csv('merged_output.csv', index=False)
 
 stock_dict = sp500_dict()
 stock = input("Input a Stock or Stock Symbol: ")
@@ -39,14 +49,17 @@ start_date = dt.datetime(2024, 1, 1)
 end_date = dt.datetime(2024, 12, 31)
 
 if stock_symbol is not None:
-    configure()
-    news_fetch(stock_name)
+    #news_fetch(stock_name)
     vaderpreprocess_text()
     example = Stock(stock_symbol, start_date, end_date)
     example.gather_data()
+    example.generate_technical_signals()
+    example.backtest()
+    example.plot_data()
+    #merge_by_month()
     df1 = pd.read_csv('historical_data.csv')
     historical_data_cols = df1[['Close', 'Open_Shifted', 'Close_Shifted']]
     technical_indicator_cols = df1[['RSI', 'SMA_50', 'EMA_20', 'MACD']]
-    df1 = pd.read_csv('stock_news.csv')
+    df2 = pd.read_csv('stock_news.csv')
 
 # example.add_technical_indicators()
