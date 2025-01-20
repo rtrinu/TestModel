@@ -11,7 +11,6 @@ from nltk.sentiment import SentimentIntensityAnalyzer
 from newsapi import NewsApiClient
 import json
 
-
 # nltk.download('punkt')
 # nltk.download('punkt_tab')
 # nltk.download('averaged_perceptron_tagger_eng')
@@ -22,6 +21,8 @@ import json
 # nltk.download('vader_lexicon')
 
 newsapi = NewsApiClient(NewsAPI_Key)
+
+
 def fetch_rss_data(stock):
     url = requests.get(f'https://news.google.com/rss/search?q={stock}+stocks')
     soup = BeautifulSoup(url.content, 'xml')
@@ -44,26 +45,25 @@ def news_fetch(symbol):
     end_date = dt.today()
     start_date = end_date - timedelta(days=30)
     newsapi_response = newsapi.get_everything(
-        q=symbol,  # Keyword or stock symbol to search for
-        from_param=start_date,  # Start date (one month ago)
-        to=end_date,  # End date (today's date)
-        language='en',  # Language of the articles
-        sort_by='publishedAt',  # Sort articles by publication date
-        page_size=5  # Maximum number of results per page
+        q=symbol,
+        from_param=start_date,
+        to=end_date,
+        language='en',
+        sort_by='publishedAt',
+        page_size=1
     )
 
-    # Process the articles returned from NewsAPI
     news_data = []
     if newsapi_response.get('articles'):
         for article in newsapi_response['articles']:
             title = article['title']
             published_at = article['publishedAt']
+            published_at = dt.strptime(published_at, "%Y-%m-%dT%H:%M:%SZ").strftime('%Y-%m-%d')
             news_data.append({
                 'Title': title,
                 'Published At': published_at
             })
 
-    # Fetch articles using Google News RSS feed
     google_news_url = f'https://news.google.com/rss/search?q={symbol}+stocks'
     google_news_response = requests.get(google_news_url)
     soup = BeautifulSoup(google_news_response.content, 'xml')
@@ -72,24 +72,22 @@ def news_fetch(symbol):
     for item in items:
         title = item.title.text
         published_at = item.pubDate.text
+        published_at = dt.strptime(published_at, "%a, %d %b %Y %H:%M:%S %Z").strftime('%Y-%m-%d')
         news_data.append({
             'Title': title,
             'Published At': published_at
         })
 
-    # Convert the list of dictionaries into a pandas DataFrame
-    df = pd.DataFrame(news_data)
+    news_data_sorted = sorted(news_data, key=lambda x: x['Published At'], reverse=True)
+    df = pd.DataFrame(news_data_sorted)
 
-    # If the file doesn't exist, write the header; if it does exist, append the data
-    df.to_csv('stock_news.csv', mode='a', header=not pd.io.common.file_exists('stock_news_csv'), index=False, quoting=1)
-
-    # print(r.json)
+    df.to_csv('stock_news.csv', index=False, quoting=1)
 
 
-def Vaderpreprocess_text():
+def vaderpreprocess_text():
     df = pd.read_csv('stock_news.csv')
-    if df.shape[0] > 100:
-        df = df.head(20)
+    # if df.shape[0] > 100:
+    #    df = df.head(20)
     sia = SentimentIntensityAnalyzer()
     res = []
     for i, row in df.iterrows():
