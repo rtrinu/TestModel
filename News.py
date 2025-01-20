@@ -3,7 +3,7 @@ import csv
 import pytz
 import requests
 from bs4 import BeautifulSoup
-import nltk
+from Keys import  NewsAPI_Key
 from dotenv import load_dotenv
 import pandas as pd
 from datetime import datetime as dt, timedelta
@@ -21,9 +21,8 @@ import os
 # nltk.download('stopwords')
 # nltk.download('wordnet')
 # nltk.download('vader_lexicon')
-load_dotenv()
-api_key = os.environ.get('NewsAPI_Key')
-newsapi = NewsApiClient(os.getenv(api_key))
+
+newsapi = NewsApiClient(NewsAPI_Key)
 
 
 def news_fetch(symbol):
@@ -37,7 +36,6 @@ def news_fetch(symbol):
         sort_by='publishedAt',
         page_size=1
     )
-    print(newsapi_response)
 
     news_data = []
     if newsapi_response.get('articles'):
@@ -66,8 +64,7 @@ def news_fetch(symbol):
 
     news_data_sorted = sorted(news_data, key=lambda x: x['Date'], reverse=True)
     df = pd.DataFrame(news_data_sorted)
-    df.index = df.pop('Date')
-    df.to_csv('stock_news.csv', index=False, quoting=1)
+    df.to_csv('stock_news.csv', index=False)
 
 
 def vaderpreprocess_text():

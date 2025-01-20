@@ -42,6 +42,15 @@ def merge_by_month():
     merged_df = merged_df.drop(columns=['year_month'])
     merged_df.to_csv('merged_output.csv', index=False)
 
+def merge_ai_csv():
+    df1 = pd.read_csv('historical_data.csv')
+    df2 = pd.read_csv('stock_news.csv')
+    historical_data_cols = df1[['Date', 'Open_Shifted', 'Close', 'Close_Shifted']]
+    technical_indicator_cols = df1[['RSI', 'SMA_50', 'EMA_20', 'MACD']]
+    compound_sentiment = df2['Compound Sentiment']
+    dataframe = pd.concat([historical_data_cols,technical_indicator_cols,compound_sentiment],axis=1)
+    dataframe.to_csv('Compound_AI_csv.csv', index=False)
+
 stock_dict = sp500_dict()
 stock = input("Input a Stock or Stock Symbol: ")
 stock_symbol, stock_name = check_user_stock(stock, stock_dict)
@@ -49,7 +58,7 @@ start_date = dt.datetime(2024, 1, 1)
 end_date = dt.datetime(2024, 12, 31)
 
 if stock_symbol is not None:
-    #news_fetch(stock_name)
+    news_fetch(stock_name)
     vaderpreprocess_text()
     example = Stock(stock_symbol, start_date, end_date)
     example.gather_data()
@@ -57,12 +66,7 @@ if stock_symbol is not None:
     example.backtest()
     #example.plot_data()
     #merge_by_month()
-    df1 = pd.read_csv('historical_data.csv')
-    historical_data_cols = df1[['Date','Open_Shifted','Close', 'Close_Shifted']]
-    technical_indicator_cols = df1[['RSI', 'SMA_50', 'EMA_20', 'MACD']]
-    dataframe = pd.DataFrame(historical_data_cols)
-    print(dataframe.head())
-    dataframe.to_csv('Filtered_Historical_Data.csv',index=False)
-    df2 = pd.read_csv('stock_news.csv')
+    merge_ai_csv()
+
 
 # example.add_technical_indicators()
