@@ -1,2 +1,1 @@
-RapidAPI_Key = "4c1e6e5bfcmshab6b10bcfedf0bcp172bb2jsn0da733acbc5c"
-NewsAPI_Key = 'fe9bf599c3f2487a93103fc08324434f'
+
