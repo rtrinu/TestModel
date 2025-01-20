@@ -1,4 +1,4 @@
-from News import fetch_rss_data, Vaderpreprocess_text, requests, get_news
+from News import fetch_rss_data, Vaderpreprocess_text, requests, news_fetch
 from stock import Stock
 import pandas as pd
 import feedparser
@@ -39,9 +39,10 @@ stock_symbol, stock_name = check_user_stock(stock, stock_dict)
 start_date = dt.datetime(2024,1,1)
 end_date = dt.datetime(2024,12,31)
 
-Vaderpreprocess_text()
 if stock_symbol is not None:
-    get_news(stock_symbol, start_date, end_date)
+    #fetch_rss_data(stock_name)
+    news_fetch(stock_name)
+    Vaderpreprocess_text()
     example = Stock(stock_symbol, start_date, end_date)
     example.gather_data()
     df1 = pd.read_csv('historical_data.csv')

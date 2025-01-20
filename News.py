@@ -1,12 +1,16 @@
 import csv
+
+import pytz
 import requests
 from bs4 import BeautifulSoup
 import nltk
-from Keys import RapidAPI_Key
+from Keys import NewsAPI_Key
 import pandas as pd
-from datetime import datetime
+from datetime import datetime as dt, timedelta
 from nltk.sentiment import SentimentIntensityAnalyzer
+from newsapi import NewsApiClient
 import json
+
 
 # nltk.download('punkt')
 # nltk.download('punkt_tab')
@@ -17,8 +21,8 @@ import json
 # nltk.download('wordnet')
 # nltk.download('vader_lexicon')
 
-
-def fetch_rss_data(stock, start_date, end_date):
+newsapi = NewsApiClient(NewsAPI_Key)
+def fetch_rss_data(stock):
     url = requests.get(f'https://news.google.com/rss/search?q={stock}+stocks')
     soup = BeautifulSoup(url.content, 'xml')
     items = soup.find_all('item')
@@ -27,41 +31,59 @@ def fetch_rss_data(stock, start_date, end_date):
     for item in items:
         title = item.title.text
         date = item.pubDate.text
-        formatted_date = dt.strptime(date, "%a, %d %b %Y %H:%M:%S %Z")
-
-        if start_date <= formatted_date <= end_date:
-            news.append((title, formatted_date))
-
-    news.sort(key=lambda x: x[2], reverse=True)
 
     with open("stock_news.csv", "w", newline="", encoding="utf-8") as file:
         writer = csv.writer(file)
-        writer.writerow(["Title", "Link", "Published Date"])
+        writer.writerow(["Title", "Published Date"])
 
         for title, link, date in news:
-            writer.writerow([title, link, date.strftime("%a, %d %b %Y %H:%M:%S %Z")])
+            writer.writerow([title, date.strftime("%a, %d %b %Y %H:%M:%S %Z")])
 
 
-def get_news(symbol, start_date, end_date):
-    url = "https://seeking-alpha.p.rapidapi.com/news/v2/list-by-symbol"
-    querystring = {"id":symbol}
-    headers = {
-        "x-rapidapi-key": RapidAPI_Key,
-        "x-rapidapi-host": "seeking-alpha.p.rapidapi.com"
-    }
+def news_fetch(symbol):
+    end_date = dt.today()
+    start_date = end_date - timedelta(days=30)
+    newsapi_response = newsapi.get_everything(
+        q=symbol,  # Keyword or stock symbol to search for
+        from_param=start_date,  # Start date (one month ago)
+        to=end_date,  # End date (today's date)
+        language='en',  # Language of the articles
+        sort_by='publishedAt',  # Sort articles by publication date
+        page_size=5  # Maximum number of results per page
+    )
 
-    news_titles = []
-    news_dates = []
-    df = pd.DataFrame()
-    response = requests.get(url, headers=headers, params=querystring).json()
-    for article in response['data']:
-        article_title = article['attributes'].get('title','No title found')
-        publish_date = article['attributes'].get('publishOn','No Date found')
-        news_titles.append(article_title)
-        news_dates.append(publish_date)
-    df['Title'] = news_titles
-    df['Date'] = news_dates
-    df.to_csv('articles.csv',index=False)
+    # Process the articles returned from NewsAPI
+    news_data = []
+    if newsapi_response.get('articles'):
+        for article in newsapi_response['articles']:
+            title = article['title']
+            published_at = article['publishedAt']
+            news_data.append({
+                'Title': title,
+                'Published At': published_at
+            })
+
+    # Fetch articles using Google News RSS feed
+    google_news_url = f'https://news.google.com/rss/search?q={symbol}+stocks'
+    google_news_response = requests.get(google_news_url)
+    soup = BeautifulSoup(google_news_response.content, 'xml')
+    items = soup.find_all('item')
+
+    for item in items:
+        title = item.title.text
+        published_at = item.pubDate.text
+        news_data.append({
+            'Title': title,
+            'Published At': published_at
+        })
+
+    # Convert the list of dictionaries into a pandas DataFrame
+    df = pd.DataFrame(news_data)
+
+    # If the file doesn't exist, write the header; if it does exist, append the data
+    df.to_csv('stock_news.csv', mode='a', header=not pd.io.common.file_exists('stock_news_csv'), index=False, quoting=1)
+
+    # print(r.json)
 
 
 def Vaderpreprocess_text():
