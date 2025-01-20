@@ -58,7 +58,7 @@ if stock_symbol is not None:
     #example.plot_data()
     #merge_by_month()
     df1 = pd.read_csv('historical_data.csv')
-    historical_data_cols = df1[['Date','Close', 'Open_Shifted', 'Close_Shifted']]
+    historical_data_cols = df1[['Date','Open_Shifted','Close', 'Close_Shifted']]
     technical_indicator_cols = df1[['RSI', 'SMA_50', 'EMA_20', 'MACD']]
     dataframe = pd.DataFrame(historical_data_cols)
     print(dataframe.head())
