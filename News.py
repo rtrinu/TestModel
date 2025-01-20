@@ -23,24 +23,6 @@ import json
 newsapi = NewsApiClient(NewsAPI_Key)
 
 
-def fetch_rss_data(stock):
-    url = requests.get(f'https://news.google.com/rss/search?q={stock}+stocks')
-    soup = BeautifulSoup(url.content, 'xml')
-    items = soup.find_all('item')
-
-    news = []
-    for item in items:
-        title = item.title.text
-        date = item.pubDate.text
-
-    with open("stock_news.csv", "w", newline="", encoding="utf-8") as file:
-        writer = csv.writer(file)
-        writer.writerow(["Title", "Published Date"])
-
-        for title, link, date in news:
-            writer.writerow([title, date.strftime("%a, %d %b %Y %H:%M:%S %Z")])
-
-
 def news_fetch(symbol):
     end_date = dt.today()
     start_date = end_date - timedelta(days=30)
