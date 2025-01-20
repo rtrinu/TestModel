@@ -1,5 +1,6 @@
 from News import vaderpreprocess_text, news_fetch
 from stock import Stock
+from LSTM import LSTM_model_creation
 import pandas as pd
 import datetime as dt
 
@@ -45,11 +46,11 @@ def merge_by_month():
 def merge_ai_csv():
     df1 = pd.read_csv('historical_data.csv')
     df2 = pd.read_csv('stock_news.csv')
-    historical_data_cols = df1[['Date', 'Open_Shifted', 'Close', 'Close_Shifted']]
+    historical_data_cols = df1[['Date','Open', 'Open_Shifted', 'Close', 'Close_Shifted']]
     technical_indicator_cols = df1[['RSI', 'SMA_50', 'EMA_20', 'MACD']]
     compound_sentiment = df2['Compound Sentiment']
     dataframe = pd.concat([historical_data_cols,technical_indicator_cols,compound_sentiment],axis=1)
-    dataframe.to_csv('Compound_AI_csv.csv', index=False)
+    dataframe.to_csv('Compound_AI.csv', index=False)
 
 stock_dict = sp500_dict()
 stock = input("Input a Stock or Stock Symbol: ")
@@ -67,6 +68,7 @@ if stock_symbol is not None:
     #example.plot_data()
     #merge_by_month()
     merge_ai_csv()
+    LSTM_model_creation()
 
 
 # example.add_technical_indicators()
