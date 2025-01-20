@@ -85,13 +85,13 @@ class Stock:
         data['Signal'] = 0
         for i in range(len(data)):
             if(
-                data['RSI'].iloc[i]<30 or
+                #data['RSI'].iloc[i]<30 or
                 data['EMA_20'].iloc[i] > data['SMA_50'].iloc[i] and
                 data['MACD'].iloc[i] > data['MACD_signal'].iloc[i]
             ):
                 data.at[data.index[i],'Signal'] = 1
             elif(
-                    data['RSI'].iloc[i] > 70 or
+                    #data['RSI'].iloc[i] > 70 or
                     data['EMA_20'].iloc[i] < data['SMA_50'].iloc[i] and
                     data['MACD'].iloc[i] < data['MACD_signal'].iloc[i]
             ):

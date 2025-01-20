@@ -55,11 +55,14 @@ if stock_symbol is not None:
     example.gather_data()
     example.generate_technical_signals()
     example.backtest()
-    example.plot_data()
+    #example.plot_data()
     #merge_by_month()
     df1 = pd.read_csv('historical_data.csv')
-    historical_data_cols = df1[['Close', 'Open_Shifted', 'Close_Shifted']]
+    historical_data_cols = df1[['Date','Close', 'Open_Shifted', 'Close_Shifted']]
     technical_indicator_cols = df1[['RSI', 'SMA_50', 'EMA_20', 'MACD']]
+    dataframe = pd.DataFrame(historical_data_cols)
+    print(dataframe.head())
+    dataframe.to_csv('Filtered_Historical_Data.csv',index=False)
     df2 = pd.read_csv('stock_news.csv')
 
 # example.add_technical_indicators()

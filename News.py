@@ -66,7 +66,7 @@ def news_fetch(symbol):
 
     news_data_sorted = sorted(news_data, key=lambda x: x['Date'], reverse=True)
     df = pd.DataFrame(news_data_sorted)
-
+    df.index = df.pop('Date')
     df.to_csv('stock_news.csv', index=False, quoting=1)
 
 
