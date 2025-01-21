@@ -3,7 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from keras.src.callbacks import EarlyStopping
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import LSTM, Dense, Input
+from tensorflow.keras.layers import LSTM, Dense, Input, Dropout
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
@@ -29,15 +29,18 @@ def LSTM_model_creation(filename):
     input_shape = (sequence_length, len(features))
     model = Sequential([
         Input(shape=input_shape),
-        LSTM(units=50, return_sequences=False),
-        Dense(units=1)
+        LSTM(units=100, return_sequences=True),  # First LSTM layer with return_sequences=True
+        Dropout(0.2),  # Regularization
+        LSTM(units=50, return_sequences=False),  # Second LSTM layer
+        Dropout(0.2),  # Regularization
+        Dense(units=1)  # Output layer
     ])
     model.compile(optimizer='adam', loss='mean_squared_error')
-    LSTM_model_train(model, x_train, y_train,x_test, y_test, epochs=50, batch_size=32)
+    LSTM_model_train(model, x_train, y_train,x_test, y_test, 75, 32)
     make_stock_prediction(model,df, features)
     plot_comparison(df, model, features)
-def LSTM_model_train(model, x_train, y_train,x_test, y_test, epochs=50, batch_size=32):
-    early_stop = EarlyStopping(monitor='val_loss',patience=25, restore_best_weights=True)
+def LSTM_model_train(model, x_train, y_train,x_test, y_test, epochs, batch_size):
+    early_stop = EarlyStopping(monitor='val_loss',patience=50, restore_best_weights=True)
     history = model.fit(
         x_train, y_train,
         epochs = epochs,
@@ -46,7 +49,7 @@ def LSTM_model_train(model, x_train, y_train,x_test, y_test, epochs=50, batch_si
         callbacks=[early_stop],
         verbose=1
     )
-    #plot_lstm(history)
+    plot_lstm(history)
 
 def plot_lstm(history):
     plt.plot(history.history['loss'], label='Training Loss')
@@ -65,7 +68,7 @@ def make_stock_prediction(model, df, features, sequence_length=60):
     predicted_scaled_reshaped[0, 0] = predicted_scaled[0, 0]
     predicted_price = scaler.inverse_transform(predicted_scaled_reshaped)
 
-    return(predicted_price[0][0])
+    return predicted_price[0][0]
 
 
 def plot_comparison(df, model, features, sequence_length=60):
