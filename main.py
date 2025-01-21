@@ -68,7 +68,7 @@ if stock_symbol is not None:
     #example.plot_data()
     #merge_by_month()
     merge_ai_csv()
-    LSTM_model_creation()
+    LSTM_model_creation('Compound_AI.csv')
 
 
 # example.add_technical_indicators()
