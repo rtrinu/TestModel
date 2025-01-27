@@ -1,6 +1,6 @@
 from News import vaderpreprocess_text, news_fetch
 from stock import Stock
-from LSTM import LSTM_model_creation
+from AiModels import LSTM_model_creation, random_forest_creation
 import pandas as pd
 import datetime as dt
 
@@ -11,6 +11,8 @@ def sp500_dict():
     sp500.to_csv('sp500_stocks.csv', index=False)
     sp500_dict = dict(zip(sp500['Symbol'], sp500['Security']))
     return sp500_dict
+
+#def ftst_dict():
 
 
 def check_user_stock(user_stock, stock_dict):
@@ -47,7 +49,7 @@ def merge_ai_csv():
     df1 = pd.read_csv('historical_data.csv')
     df2 = pd.read_csv('stock_news.csv')
     historical_data_cols = df1[['Date','Open', 'Open_Shifted', 'Close', 'Close_Shifted']]
-    technical_indicator_cols = df1[['RSI', 'SMA_50', 'EMA_20', 'MACD']]
+    technical_indicator_cols = df1[['RSI', 'SMA_50', 'EMA_20', 'MACD','Signal']]
     compound_sentiment = df2['Compound Sentiment']
     dataframe = pd.concat([historical_data_cols,technical_indicator_cols,compound_sentiment],axis=1)
     dataframe.to_csv('Compound_AI.csv', index=False)
@@ -65,10 +67,11 @@ if stock_symbol is not None:
     example.gather_data()
     example.generate_technical_signals()
     example.backtest()
-    #example.plot_data()
+    example.plot_data()
     #merge_by_month()
     merge_ai_csv()
-    LSTM_model_creation('Compound_AI.csv')
+    #LSTM_model_creation('Compound_AI.csv')
+    random_forest_creation('Compound_AI.csv')
 
 
 # example.add_technical_indicators()
