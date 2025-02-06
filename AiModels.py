@@ -6,7 +6,7 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dense, Input, Dropout
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, confusion_matrix, ConfusionMatrixDisplay
+from sklearn.metrics import accuracy_score, confusion_matrix, ConfusionMatrixDisplay, mean_absolute_error, mean_squared_error, r2_score
 from sklearn.preprocessing import StandardScaler
 
 
@@ -88,7 +88,7 @@ def train_lstm_model(model, x_train, y_train, x_test, y_test, epochs, batch_size
     :param epochs: int - number of epochs for training
     :param batch_size: int - batch size for training
     """
-    early_stop = EarlyStopping(monitor='val_loss', patience=20, restore_best_weights=True)
+    early_stop = EarlyStopping(monitor='val_loss', patience=25, restore_best_weights=True)
     history = model.fit(x_train, y_train, epochs=epochs, batch_size=batch_size, validation_data=(x_test, y_test),
                         callbacks=[early_stop], verbose=1)
 
@@ -106,55 +106,31 @@ def plot_training_history(history):
 
 def predict_and_visualize_lstm(df, model, features):
     """
-    Use the trained LSTM model to make predictions and visualize the results.
+    Use the trained LSTM model to make predictions and calculate error metrics.
 
-    :param df: pd.DataFrame - historical stock data
-    :param model: object - trained LSTM model
-    :param features: list - list of features used for prediction
     """
-    predicted_price = make_lstm_prediction(model, df, features)
-    actual_price = df['Close'].iloc[-1]
-
-    plot_predictions(df, predicted_price, actual_price)
 
 
 def make_lstm_prediction(model, df, features, sequence_length=60):
     """Make a stock price prediction using the trained LSTM model."""
+    # Scale the features for the prediction
     scaler = StandardScaler()
     scaled_data = scaler.fit_transform(df[features])
+
+    # Prepare the input for the LSTM model
     x_input = scaled_data[-sequence_length:].reshape((1, sequence_length, len(features)))
+
+    # Predict the scaled price
     predicted_scaled = model.predict(x_input)
 
+    # Reshape the predicted value back
     predicted_scaled_reshaped = np.zeros((1, len(features)))
     predicted_scaled_reshaped[0, 0] = predicted_scaled[0, 0]
 
+    # Inverse the scaling to get the actual predicted price
     predicted_price = scaler.inverse_transform(predicted_scaled_reshaped)
+
     return predicted_price[0][0]
-
-
-def plot_predictions(df, predicted_price, actual_price):
-    """
-    Plot historical prices, predicted price, and actual next day's price.
-
-    :param df: pd.DataFrame - historical stock data
-    :param predicted_price: float - predicted price for the next day
-    :param actual_price: float - actual stock price for the next day
-    """
-    historical_prices = df['Close'].iloc[-60:]
-
-    plt.figure(figsize=(12, 6))
-    plt.plot(range(len(historical_prices)), historical_prices, label='Historical Prices', color='blue')
-    plt.plot(len(historical_prices), actual_price, 'go', label='Actual Price', markersize=8)
-    plt.plot(len(historical_prices), predicted_price, 'ro', label='Predicted Price', markersize=8)
-    plt.xlabel('Time (Days)')
-    plt.ylabel('Stock Price')
-    plt.title('Stock Price Prediction: Actual vs Predicted')
-    plt.legend()
-    plt.grid()
-    plt.show()
-
-    print(f"Actual Price: {actual_price}")
-    print(f"Predicted Price: {predicted_price}")
 
 
 def create_and_train_random_forest_model(filename: str):
@@ -241,4 +217,4 @@ def run_models(filename: str):
     :param filename: str - path to the stock data CSV file
     """
     create_and_train_lstm_model(filename)
-    create_and_train_random_forest_model(filename)
+    #create_and_train_random_forest_model(filename)
