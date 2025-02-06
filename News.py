@@ -9,10 +9,12 @@ import pandas as pd
 from datetime import datetime as dt, timedelta
 from nltk.sentiment import SentimentIntensityAnalyzer
 from newsapi import NewsApiClient
+from dotenv import load_dotenv
 import os
 
 
-
+def configure():
+    load_dotenv()
 # nltk.download('punkt')
 # nltk.download('punkt_tab')
 # nltk.download('averaged_perceptron_tagger_eng')
@@ -21,11 +23,12 @@ import os
 # nltk.download('stopwords')
 # nltk.download('wordnet')
 # nltk.download('vader_lexicon')
-
-newsapi = NewsApiClient(NewsAPI_Key)
+configure()
+newsapi = NewsApiClient(os.getenv('NEWS_KEY'))
 
 
 def news_fetch(symbol):
+
     end_date = dt.today()
     start_date = end_date - timedelta(days=30)
     newsapi_response = newsapi.get_everything(
