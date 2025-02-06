@@ -230,3 +230,6 @@ def tree_plot(df, model, features, sequence_length=60):
     # Print actual vs predicted values
     print(f"Actual Next Day Price: {actual_next_day_price}")
     print(f"Predicted Signals for Next Day: {predictions[-1]}")
+
+def run_models(filename:str):
+    LSTM_model_creation(filename)
