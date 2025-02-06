@@ -1,3 +1,4 @@
+from News import vaderpreprocess_text, news_fetch
 import yfinance as yf
 import pandas as pd
 import pandas_ta as ta
@@ -17,6 +18,7 @@ class Stock:
         self.start_date = start_date
         self.end_date = end_date
         self.df = None
+        self.stock_dict = self.fetch_sp500_data()
         self.initialise()
 
     def fetch_sp500_data(self) -> dict:
@@ -55,7 +57,7 @@ class Stock:
 
         self.df = self.df.reset_index()
         self.add_technical_indicators()
-        self.save_to_csv('historical_data.csv')
+        self.save_to_csv()
 
     def get_stock_symbol_from_name(self, user_stock: str, stock_dict: dict) -> tuple:
         """
@@ -99,7 +101,7 @@ class Stock:
         self.df['MACD_histogram'] = macd['MACDh_12_26_9']
 
         self.df.dropna(inplace=True)
-        self.save_to_csv('historical_data_with_indicators.csv')
+        self.save_to_csv()
 
     def generate_technical_signals(self):
         """
@@ -118,9 +120,9 @@ class Stock:
         self.df.loc[buy_condition, 'Signal'] = 1  # Buy signal
         self.df.loc[sell_condition, 'Signal'] = -1  # Sell signal
 
-        self.save_to_csv('historical_data_with_signals.csv')
+        self.save_to_csv()
 
-    def backtest(self, initial_balance: int = 10000) -> float:
+    def backtest(self, initial_balance: int = 10000):
         """
         Backtests the trading strategy using buy and sell signals.
 
@@ -182,11 +184,11 @@ class Stock:
         plt.tight_layout()
         plt.show()
 
-    def save_to_csv(self, filename: str):
+    def save_to_csv(self, filename: str = 'historical_data.csv'):
         """
         Saves the stock data (contained in `self.df`) to a CSV file.
 
-        :param filename: str - The name of the CSV file.
+        :param filename: str - The name of the CSV file (default is 'historical_data.csv').
         :return: None
         """
         if self.df is not None:
@@ -194,6 +196,44 @@ class Stock:
             print(f"Data saved to {filename}")
         else:
             print("No data to save.")
+
+    def get_news_articles(self, user_stock: str):
+        """
+        Gathers news articles about the company and creates a compound sentiment using outside methods from News
+        :param user_stock: str, stock symbol or company name to fetch data for
+        :return: None
+        """
+        user_stock_upper = user_stock.upper()
+        stock_symbol, stock_name = self.get_stock_symbol_from_name(user_stock_upper, stock_dict)
+        news_fetch(stock_name)
+        vaderpreprocess_text()
+
+    def merge_ai_csv(self):
+        """
+        Merges historical stock data with news sentiment data and saves it to a new CSV file.
+
+        This method reads in two CSV files: one containing historical stock data
+        and another containing news sentiment data, and merges them into a single
+        DataFrame which is then saved to a new CSV file.
+        :return: None
+        """
+        # Load the historical stock data and news data
+        df1 = pd.read_csv("historical_data.csv")
+        df2 = pd.read_csv("stock_news.csv")
+
+        # Select relevant columns from the historical stock data
+        historical_data_cols = df1[['Date', 'Open', 'Open_Shifted', 'Close', 'Close_Shifted']]
+        technical_indicator_cols = df1[['RSI', 'SMA_50', 'EMA_20', 'MACD', 'Signal']]
+
+        # Select the Compound Sentiment from the news data
+        compound_sentiment = df2['Compound Sentiment']
+
+        # Merge all data into a single DataFrame
+        dataframe = pd.concat([historical_data_cols, technical_indicator_cols, compound_sentiment], axis=1)
+
+        # Save the merged DataFrame to a new CSV file
+        dataframe.to_csv('Compound_AI.csv', index=False)
+        print("Merged data saved to 'Compound_AI.csv'.")
 
     def initialise(self):
         """
@@ -203,4 +243,6 @@ class Stock:
         """
         self.gather_data(self.stock_symbol)
         self.generate_technical_signals()
-        self.backtest()
+        #self.backtest()
+        self.get_stock_symbol_from_name(self.stock_symbol, self.stock_dict)
+        self.merge_ai_csv()
