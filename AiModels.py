@@ -6,44 +6,64 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dense, Input, Dropout
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, confusion_matrix, precision_score, recall_score, ConfusionMatrixDisplay, \
-    classification_report
+from sklearn.metrics import accuracy_score, confusion_matrix, ConfusionMatrixDisplay
 from sklearn.preprocessing import StandardScaler
 
 
-def LSTM_model_creation(filename: str):
+def create_and_train_lstm_model(filename: str):
     """
-    This function creates, trains, and evaluates an LSTM model for stock price prediction based on historical data.
+    Loads stock data, processes it, trains an LSTM model, and visualizes results.
 
-    It loads a dataset from the provided CSV file, processes the data (scaling and feature engineering), and prepares the
-    data for training the LSTM model. The model is then trained on the training data and evaluated on the test data.
-    Predictions for stock prices are generated, and the results are plotted.
-
-    :param filename: str
-        The path to the CSV file containing the stock data. The file should include columns such as 'Close', 'Close_Shifted',
-        'RSI', 'SMA_50', 'EMA_20', 'Compound Sentiment', 'Open', 'Open_Shifted', and 'Signal'.
-
-    :return: None
-        This function does not return any value. It trains the LSTM model, makes predictions, and visualizes results.
+    :param filename: str - path to the stock data CSV file
     """
-    df = pd.read_csv(filename)
-    df = df.dropna()
+    df = load_and_preprocess_data(filename)
+
     features = ['Close', 'Close_Shifted', 'RSI', 'SMA_50', 'EMA_20', 'Compound Sentiment', 'Open', 'Open_Shifted',
                 'Signal']
+    x, y = prepare_lstm_sequences(df, features, sequence_length=60)
+
+    x_train, x_test, y_train, y_test = train_test_split(x, y, shuffle=False, train_size=0.8)
+
+    model = build_lstm_model(input_shape=(60, len(features)))
+    train_lstm_model(model, x_train, y_train, x_test, y_test, epochs=75, batch_size=32)
+
+    predict_and_visualize_lstm(df, model, features)
+
+
+def load_and_preprocess_data(filename: str):
+    """Load and clean the stock data from a CSV file."""
+    df = pd.read_csv(filename)
+    df = df.dropna()
+    return df
+
+
+def prepare_lstm_sequences(df: pd.DataFrame, features: list, sequence_length: int = 60):
+    """
+    Prepare sequences of features and labels for LSTM model.
+
+    :param df: pd.DataFrame - DataFrame containing stock data
+    :param features: list - list of feature columns
+    :param sequence_length: int - number of past steps to consider for prediction
+    :return: x, y - input features and corresponding labels
+    """
     scaler = StandardScaler()
     scaled_data = scaler.fit_transform(df[features])
-    sequence_length = 60
-    x = []
-    y = []
 
+    x, y = [], []
     for i in range(sequence_length, len(scaled_data)):
         x.append(scaled_data[i - sequence_length:i])
         y.append(scaled_data[i, 0])
 
-    x = np.array(x)
-    y = np.array(y)
-    x_train, x_test, y_train, y_test = train_test_split(x, y, shuffle=False, train_size=0.8)
-    input_shape = (sequence_length, len(features))
+    return np.array(x), np.array(y)
+
+
+def build_lstm_model(input_shape):
+    """
+    Build and compile an LSTM model.
+
+    :param input_shape: tuple - shape of input data for LSTM
+    :return: model - compiled LSTM model
+    """
     model = Sequential([
         Input(shape=input_shape),
         LSTM(units=100, return_sequences=True),
@@ -53,71 +73,29 @@ def LSTM_model_creation(filename: str):
         Dense(units=1)
     ])
     model.compile(optimizer='adam', loss='mean_squared_error')
-    LSTM_model_train(model, x_train, y_train, x_test, y_test, 75, 32)
-    make_stock_prediction(model, df, features)
-    lstm_plot(df, model, features)
+    return model
 
 
-def LSTM_model_train(model: object, x_train: list, y_train: list, x_test: list, y_test: list, epochs: int,
-                     batch_size: int):
+def train_lstm_model(model, x_train, y_train, x_test, y_test, epochs, batch_size):
     """
-        This function trains an LSTM model using the provided training data and evaluates it on the test data.
+    Train the LSTM model with early stopping.
 
-        The model is trained using the specified number of epochs and batch size. It utilizes early stopping to monitor
-        validation loss and stop training if the validation loss does not improve for a given number of epochs.
-        After training, it plots the training and validation loss curves.
-
-        :param model: object
-            The LSTM model to be trained. This model should be a compiled Keras model.
-
-        :param x_train: list
-            The input features for training. It should be a 3D array of shape (samples, sequence_length, features).
-
-        :param y_train: list
-            The target values for training. It should be a 1D array of shape (samples,).
-
-        :param x_test: list
-            The input features for testing. It should have the same shape as x_train.
-
-        :param y_test: list
-            The target values for testing. It should have the same shape as y_train.
-
-        :param epochs: int
-            The number of epochs to train the model for.
-
-        :param batch_size: int
-            The number of samples per gradient update (batch size) during training.
-
-        :return: None
-            This function does not return any value. It trains the LSTM model and plots the training/validation loss curves.
-        """
+    :param model: object - compiled LSTM model
+    :param x_train: list - training data
+    :param y_train: list - training labels
+    :param x_test: list - testing data
+    :param y_test: list - testing labels
+    :param epochs: int - number of epochs for training
+    :param batch_size: int - batch size for training
+    """
     early_stop = EarlyStopping(monitor='val_loss', patience=20, restore_best_weights=True)
-    history = model.fit(
-        x_train, y_train,
-        epochs=epochs,
-        batch_size=batch_size,
-        validation_data=(x_test, y_test),
-        callbacks=[early_stop],
-        verbose=1
-    )
-    plot_lstm(history)
+    history = model.fit(x_train, y_train, epochs=epochs, batch_size=batch_size, validation_data=(x_test, y_test),
+                        callbacks=[early_stop], verbose=1)
+
+    plot_training_history(history)
 
 
-def plot_lstm(history):
-    """
-        This function plots the training and validation loss curves for an LSTM model.
-
-        The function takes the training history of an LSTM model and visualizes the loss values during training
-        and validation over each epoch. This helps to analyze the model's performance and whether it is overfitting.
-
-        :param history: object
-            The training history object returned by the `fit` method of the Keras model. It contains the loss
-            values for each epoch, which are accessed via `history.history['loss']` for training loss and
-            `history.history['val_loss']` for validation loss.
-
-        :return: None
-            This function does not return any value. It simply plots the loss curves.
-        """
+def plot_training_history(history):
     plt.plot(history.history['loss'], label='Training Loss')
     plt.plot(history.history['val_loss'], label='Validation Loss')
     plt.xlabel('Epochs')
@@ -126,218 +104,141 @@ def plot_lstm(history):
     plt.show()
 
 
-def random_forest_creation(filename: str):
-    # Load and preprocess the data
-    df = pd.read_csv(filename)
-    df = df.dropna()
-
-    # Define features and target
-    features = ['Close', 'Close_Shifted', 'RSI', 'SMA_50', 'EMA_20', 'Compound Sentiment', 'Open', 'Open_Shifted']
-    target = 'Signal'
-    sequence_length = 60
-
-    # Prepare sequences
-    x = []
-    y = []
-
-    for i in range(sequence_length, len(df)):
-        x.append(df[features].iloc[i - sequence_length:i])
-        y.append(df[target].iloc[i])
-
-    x = np.array(x)
-    y = np.array(y)
-
-    # Flatten the sequences for the RandomForestClassifier
-    x_flat = np.array([sequence[-1] for sequence in x])
-
-    # Train-test split
-    x_train, x_test, y_train, y_test = train_test_split(x_flat, y, shuffle=False, train_size=0.8)
-
-    # Initialize and train the RandomForestClassifier
-    model = RandomForestClassifier(n_estimators=100, random_state=1)
-    random_forest_train(x_train, y_train, x_test, y_test, model)
-    tree_plot(df, model, features)
-
-
-def random_forest_train(x_train: list, y_train: list, x_test: list, y_test: list, model: object):
-    # Train the model
-    model.fit(x_train, y_train)
-
-    # Make predictions on the test set
-    predictions = model.predict(x_test)
-
-    # Convert y_test to pandas Series for alignment
-    if not isinstance(y_test, pd.Series):
-        y_test = pd.Series(y_test, name="Target")
-
-    # Align predictions with y_test index
-    predictions = pd.Series(predictions, index=y_test.index, name="Predictions")
-
-    # Combine actual and predicted values
-    combined = pd.concat([y_test, predictions], axis=1)
-    combined.columns = ["Target", "Predictions"]
-
-    # Calculate accuracy
-    accuracy = (combined["Target"] == combined["Predictions"]).mean()
-    print(f"Model Accuracy: {accuracy:.2f}")
-
-    # Print confusion matrix and classification report for multiclass classification
-    print("\nConfusion Matrix:")
-    print(confusion_matrix(y_test, predictions))
-
-    return model
-
-
-def make_stock_prediction(model: object, df: pd.DataFrame, features: list, sequence_length: int = 60):
+def predict_and_visualize_lstm(df, model, features):
     """
-        This function uses a trained model to make a stock price prediction based on historical data.
+    Use the trained LSTM model to make predictions and visualize the results.
 
-        It scales the provided features using StandardScaler, then reshapes the data into the format required by the model
-        (for time series prediction) and uses the model to make a prediction for the next time step.
-        Finally, it inversely scales the predicted price back to the original scale of the data.
+    :param df: pd.DataFrame - historical stock data
+    :param model: object - trained LSTM model
+    :param features: list - list of features used for prediction
+    """
+    predicted_price = make_lstm_prediction(model, df, features)
+    actual_price = df['Close'].iloc[-1]
 
-        :param model: object
-            The trained machine learning model (e.g., LSTM or any other model) used to make the prediction.
+    plot_predictions(df, predicted_price, actual_price)
 
-        :param df: pd.DataFrame
-            The DataFrame containing the historical stock data, including the features used for prediction.
 
-        :param features: list
-            A list of column names (strings) from the DataFrame representing the features used in making predictions.
-
-        :param sequence_length: int, default=60
-            The number of pastime steps to use for making the prediction. For example, if set to 60,
-            the model will use the previous 60 days of data to predict the next day's stock price.
-
-        :return: float
-            The predicted stock price for the next time step (after the last row in the DataFrame).
-        """
+def make_lstm_prediction(model, df, features, sequence_length=60):
+    """Make a stock price prediction using the trained LSTM model."""
     scaler = StandardScaler()
     scaled_data = scaler.fit_transform(df[features])
     x_input = scaled_data[-sequence_length:].reshape((1, sequence_length, len(features)))
     predicted_scaled = model.predict(x_input)
+
     predicted_scaled_reshaped = np.zeros((1, len(features)))
     predicted_scaled_reshaped[0, 0] = predicted_scaled[0, 0]
-    predicted_price = scaler.inverse_transform(predicted_scaled_reshaped)
 
+    predicted_price = scaler.inverse_transform(predicted_scaled_reshaped)
     return predicted_price[0][0]
 
 
-def lstm_plot(df: pd.DataFrame, model: object, features: list, sequence_length: int = 60):
+def plot_predictions(df, predicted_price, actual_price):
     """
-        This function visualizes the historical stock prices along with the actual and predicted prices
-        for the next day. It uses the trained model to make the prediction and compares it with the actual
-        next day's stock price.
+    Plot historical prices, predicted price, and actual next day's price.
 
-        It plots the historical stock prices, the actual next day's price, and the predicted next day's price
-        on the same graph to help evaluate the model's performance.
+    :param df: pd.DataFrame - historical stock data
+    :param predicted_price: float - predicted price for the next day
+    :param actual_price: float - actual stock price for the next day
+    """
+    historical_prices = df['Close'].iloc[-60:]
 
-        :param df: pd.DataFrame
-            The DataFrame containing the stock data. It should include the 'Close' column (historical stock prices).
-
-        :param model: object
-            The trained machine learning model (e.g., LSTM or other model) used for making predictions.
-
-        :param features: list
-            A list of feature columns (strings) used to train the model for predictions. These features are necessary
-            for making predictions.
-
-        :param sequence_length: int, default=60
-            The number of previous days of data used for prediction (i.e., the sequence length). The model will use
-            the last `sequence_length` days to predict the next day's price.
-
-        :return: None
-            This function does not return any value, but it displays a plot showing the historical stock prices,
-            actual price, and predicted price.
-        """
-    # Predict stock price
-    predicted_price = make_stock_prediction(model, df, features, sequence_length)
-
-    # Get the actual historical prices
-    historical_prices = df['Close'].iloc[-sequence_length:]  # Last sequence_length days
-
-    # Get the actual next day's price
-    actual_next_day_price = df['Close'].iloc[-1]
-
-    # Plot
     plt.figure(figsize=(12, 6))
     plt.plot(range(len(historical_prices)), historical_prices, label='Historical Prices', color='blue')
-    plt.plot(len(historical_prices), actual_next_day_price, 'go', label='Actual Price (Next Day)',
-             markersize=8)  # Green marker
-    plt.plot(len(historical_prices), predicted_price, 'ro', label='Predicted Price (Next Day)',
-             markersize=8)  # Red marker
+    plt.plot(len(historical_prices), actual_price, 'go', label='Actual Price', markersize=8)
+    plt.plot(len(historical_prices), predicted_price, 'ro', label='Predicted Price', markersize=8)
     plt.xlabel('Time (Days)')
     plt.ylabel('Stock Price')
-    plt.title('Actual Historical Prices, Actual Next Day Price, and Predicted Price')
+    plt.title('Stock Price Prediction: Actual vs Predicted')
     plt.legend()
     plt.grid()
     plt.show()
 
-    print(f"Actual Next Day Price: {actual_next_day_price}")
-    print(f"Predicted Next Day Price: {predicted_price}")
+    print(f"Actual Price: {actual_price}")
+    print(f"Predicted Price: {predicted_price}")
 
 
-def tree_plot(df: pd.DataFrame, model: object, features: list, sequence_length: int = 60):
+def create_and_train_random_forest_model(filename: str):
     """
-    Function to plot actual vs predicted signals (buy, sell, hold) compared to historical stock prices using Random Forest Classifier.
+    Train a Random Forest model to predict buy/sell/hold signals based on stock data.
 
-    Parameters:
-    - df: DataFrame containing the stock data (must include price_column).
-    - model: Trained Random Forest Classifier model.
-    - features: List of feature columns to use for prediction.
-    - sequence_length: The number of previous days to consider for prediction (default is 60).
+    :param filename: str - path to the stock data CSV file
     """
+    df = load_and_preprocess_data(filename)
 
-    # Prepare the data to predict the next day's signal
-    x = []
+    features = ['Close', 'Close_Shifted', 'RSI', 'SMA_50', 'EMA_20', 'Compound Sentiment', 'Open', 'Open_Shifted']
+    target = 'Signal'
+    x, y = prepare_random_forest_data(df, features, target, sequence_length=60)
+
+    model = train_random_forest_model(x, y)
+    evaluate_random_forest_model(model, x, y)
+    plot_random_forest_predictions(df, model, features)
+
+
+def prepare_random_forest_data(df, features, target, sequence_length=60):
+    """
+    Prepare sequences for training a Random Forest model.
+
+    :param df: pd.DataFrame - DataFrame containing stock data
+    :param features: list - list of feature columns
+    :param target: str - target column for classification
+    :param sequence_length: int - number of past steps to consider for prediction
+    :return: x, y - input features and target labels
+    """
+    x, y = [], []
     for i in range(sequence_length, len(df)):
-        # Flatten the sequence of features into a 1D vector for each sample
         x.append(df[features].iloc[i - sequence_length:i].values.flatten())
+        y.append(df[target].iloc[i])
 
-    x = np.array(x)  # Now x will be 2D: (n_samples, sequence_length * features)
+    return np.array(x), np.array(y)
 
-    # Predict the signals for the test set
+
+def train_random_forest_model(x, y):
+    """
+    Train a Random Forest Classifier.
+
+    :param x: list - input features for training
+    :param y: list - target labels for training
+    :return: model - trained Random Forest model
+    """
+    model = RandomForestClassifier(n_estimators=100, random_state=1)
+    model.fit(x, y)
+    return model
+
+
+def evaluate_random_forest_model(model, x, y):
     predictions = model.predict(x)
+    accuracy = accuracy_score(y, predictions)
+    print(f"Random Forest Model Accuracy: {accuracy:.2f}")
+    print("Confusion Matrix:")
+    print(confusion_matrix(y, predictions))
 
-    # Get the historical prices for the last sequence_length days
-    historical_prices = df['Close'].iloc[-sequence_length:]  # Last 'sequence_length' days
 
-    # Get the actual next day's price (the day after the last data point)
-    actual_next_day_price = df['Close'].iloc[-1]
+def plot_random_forest_predictions(df, model, features):
+    """Visualize the predicted buy/sell/hold signals from the Random Forest model."""
+    x = []
+    for i in range(60, len(df)):
+        x.append(df[features].iloc[i - 60:i].values.flatten())
 
-    # Plot the historical prices and predicted signals
-    plt.figure(figsize=(14, 7))
-    plt.plot(df.index[-sequence_length:], historical_prices, label='Historical Prices', color='blue')
-
-    # Get the indices of the predictions (after the historical sequence)
+    predictions = model.predict(np.array(x))
     predicted_dates = df.index[-len(predictions):]
 
-    # Plot predicted signals: Buy, Sell, Hold (1, -1, 0)
-    buy_signals = predicted_dates[predictions == 1]
-    sell_signals = predicted_dates[predictions == -1]
-    hold_signals = predicted_dates[predictions == 0]
-
-    # Scatter plot for buy, sell, hold signals
-    plt.scatter(buy_signals, df.loc[buy_signals, 'Close'], marker="^", color="green", label="Buy Signal", alpha=1)
-    plt.scatter(sell_signals, df.loc[sell_signals, 'Close'], marker="v", color="red", label="Sell Signal", alpha=1)
-    plt.scatter(hold_signals, df.loc[hold_signals, 'Close'], marker="o", color="orange", label="Hold Signal", alpha=1)
-
-    # Add actual next day's price (for comparison)
-    plt.plot(len(historical_prices), actual_next_day_price, 'go', label='Actual Price (Next Day)', markersize=8)
-
-    # Customize plot
+    plt.figure(figsize=(14, 7))
+    plt.plot(df.index[-60:], df['Close'].iloc[-60:], label='Historical Prices', color='blue')
+    plt.scatter(predicted_dates, df.loc[predicted_dates, 'Close'], marker="o", label="Predicted Signals")
     plt.xlabel('Date')
     plt.ylabel('Stock Price')
-    plt.title('Actual Stock Prices and Predicted Buy/Sell/Hold Signals')
+    plt.title('Stock Price and Predicted Buy/Sell/Hold Signals')
     plt.legend()
     plt.grid(True)
     plt.tight_layout()
     plt.show()
 
-    # Print actual vs predicted values
-    print(f"Actual Next Day Price: {actual_next_day_price}")
-    print(f"Predicted Signals for Next Day: {predictions[-1]}")
-
 
 def run_models(filename: str):
-    LSTM_model_creation(filename)
+    """
+    Run both LSTM and Random Forest models for stock price prediction and signal generation.
+
+    :param filename: str - path to the stock data CSV file
+    """
+    create_and_train_lstm_model(filename)
+    create_and_train_random_forest_model(filename)
