@@ -14,6 +14,14 @@ class Stock:
         self.initialise()
 
     def sp500_dict(self):
+        """
+            Fetches the S&P 500 companies' information from an online CSV file,
+            saves it to a local CSV file, and returns a dictionary mapping
+            stock symbols to company names.
+
+            :return: dict
+                A dictionary with stock symbols as keys and company names as values.
+            """
         url = 'https://datahub.io/core/s-and-p-500-companies/r/constituents.csv'
         sp500 = pd.read_csv(url)
         sp500.to_csv('sp500_stocks.csv', index=False)
@@ -22,7 +30,13 @@ class Stock:
 
     # def ftst_dict():
 
-    def gather_data(self, user_stock):
+    def gather_data(self, user_stock: str):
+        """
+            Gathers historical stock data for the given stock symbol or name.
+
+            :param user_stock: str, the stock symbol or name to fetch data for.
+            :return: None, returns None if no data is found or invalid input.
+            """
         stock_dict = self.sp500_dict()
         user_stock_upper = user_stock.upper()
         stock_symbol, stock_name = None, None
@@ -52,6 +66,20 @@ class Stock:
         # self.RSI_plot()
 
     def add_technical_indicators(self):
+        """
+        This function adds common technical analysis indicators to the stock DataFrame.
+
+        It first creates shifted versions of the stock's 'Open', 'High', 'Low', and 'Close' prices,
+        then calculates various technical indicators including RSI, SMA, EMA, and MACD using the shifted closing prices.
+        The indicators are used to assess the stock's historical performance and potential future trends.
+        The function also removes rows with missing values and saves the updated DataFrame to a CSV file.
+
+        :param self: object
+            The instance of the class which holds the stock DataFrame and performs data analysis.
+
+        :return: None
+            The function directly modifies the DataFrame by adding the calculated indicators.
+        """
         if self.df is None:
             print("No data found. Please gather data first")
             return
@@ -111,7 +139,21 @@ class Stock:
         plt.show()
 
     def generate_technical_signals(self):
-        """Generate buy/sell signals based on technical indicators."""
+        """
+        This function generates buy and sell signals based on technical analysis indicators.
+
+        It checks if the DataFrame is valid and non-empty. The function then defines conditions for buy and sell signals
+        based on the relationship between the Exponential Moving Average (EMA), Simple Moving Average (SMA), and the MACD indicator.
+        If the EMA is greater than the SMA and the MACD is greater than the MACD signal, a buy signal is generated (denoted by 1).
+        If the EMA is less than the SMA and the MACD is less than the MACD signal, a sell signal is generated (denoted by -1).
+        The generated signals are added to the DataFrame, and the updated DataFrame is saved to a CSV file.
+
+        :param self: object
+            The instance of the class that holds the stock DataFrame with technical indicators.
+
+        :return: None
+            The function modifies the DataFrame in place by adding a 'Signal' column with generated buy/sell signals.
+        """
         if self.df is None or self.df.empty:
             print("No data available to generate signals.")
             return
@@ -125,8 +167,24 @@ class Stock:
 
         self.save_to_csv('historical_data_with_signals.csv')
 
-    def backtest(self, initial_balance=10000):
-        """Backtest strategy using buy/sell signals."""
+    def backtest(self, initial_balance: int = 10000):
+        """
+        This function backtests a trading strategy using buy and sell signals.
+
+        It checks if the DataFrame containing stock data is valid and non-empty. The function then simulates a trading strategy by iterating over each row of the DataFrame.
+        When a buy signal (1) is encountered, it simulates buying the stock by converting the available balance into a position at the current stock price.
+        When a sell signal (-1) is encountered, it sells the position and converts it back to cash.
+        After processing all the signals, the final balance is calculated by adding any remaining position's value at the current stock price.
+
+        :param self: object
+            The instance of the class that holds the stock data and buy/sell signals.
+
+        :param initial_balance: int, default=10000
+            The initial cash balance for the backtest. It represents the amount of money available to start the simulation.
+
+        :return: float
+            The final balance after executing the buy and sell signals.
+        """
         if self.df is None or self.df.empty:
             print("No data available for backtesting.")
             return
@@ -146,9 +204,21 @@ class Stock:
         return final_value
 
     def plot_data(self):
-        data = self.df
-        """Plot stock data with indicators, RSI, and signals."""
+        """
+        This function plots stock data, including closing prices, technical indicators (EMA, SMA), and signals (buy/sell), along with the Relative Strength Index (RSI).
 
+        The plot is divided into two subplots:
+        1. The first subplot displays the stock's closing prices, the 20-day Exponential Moving Average (EMA), the 50-day Simple Moving Average (SMA), and the buy/sell signals.
+           Buy signals are marked with green upward arrows (^) and sell signals with red downward arrows (v).
+        2. The second subplot shows the RSI (Relative Strength Index) with horizontal lines indicating overbought (70) and oversold (30) levels.
+
+        :param self: object
+            The instance of the class that contains the stock data and technical indicators to be plotted.
+
+        :return: None
+            This function does not return any value; it only displays the plot.
+        """
+        data = self.df
         fig, ax1 = plt.subplots(figsize=(14, 7), nrows=2, sharex=True)
 
         # Plot the stock prices and technical indicators on the first axis (ax1)
@@ -179,7 +249,23 @@ class Stock:
         plt.tight_layout()
         plt.show()
 
-    def save_to_csv(self, filename):
+    def save_to_csv(self, filename:str):
+        """
+        This function saves the stock data (contained in the DataFrame `self.df`) to a CSV file.
+
+        If the DataFrame is not empty, it writes the data to the specified CSV file with the given filename.
+        The index of the DataFrame is included in the CSV file. A confirmation message is printed upon successful saving.
+        If no data is available (i.e., `self.df` is None), a message indicating that no data is available to save is printed.
+
+        :param self: object
+            The instance of the class that contains the DataFrame to be saved.
+
+        :param filename: str
+            The name of the CSV file where the data will be saved.
+
+        :return: None
+            This function does not return any value, it only saves the data to a file.
+        """
         if self.df is not None:
             self.df.to_csv(filename, index=True)
             print(f"Data saved to {filename}")
@@ -187,6 +273,20 @@ class Stock:
             print("No data to save.")
 
     def initialise(self):
+        """
+        This function initializes the entire process of gathering data, generating technical signals, and performing a backtest.
+
+        It first calls `gather_data()` to fetch the stock data, followed by `generate_technical_signals()` to compute relevant technical indicators
+        and trading signals (such as buy/sell conditions). Finally, it performs a backtest of the strategy using the `backtest()` function to simulate
+        the performance of the trading signals over the historical data.
+
+        :param self: object
+            The instance of the class that contains methods for gathering data, generating signals, and backtesting.
+
+        :return: None
+            This function does not return any value, it merely orchestrates the data gathering, signal generation, and backtesting process.
+        """
+
         self.gather_data()
         self.generate_technical_signals()
         self.backtest()
