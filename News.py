@@ -1,36 +1,38 @@
+import os
 import csv
-
 import pytz
 import requests
-from bs4 import BeautifulSoup
-from Keys import  NewsAPI_Key
-from dotenv import load_dotenv
 import pandas as pd
+from bs4 import BeautifulSoup
 from datetime import datetime as dt, timedelta
-from nltk.sentiment import SentimentIntensityAnalyzer
-from newsapi import NewsApiClient
 from dotenv import load_dotenv
-import os
+from newsapi import NewsApiClient
+from nltk.sentiment import SentimentIntensityAnalyzer
 
 
-def configure():
+# Load environment variables
+def configure() -> None:
+    """
+    Configure the environment by loading environment variables from a .env file.
+    """
     load_dotenv()
-# nltk.download('punkt')
-# nltk.download('punkt_tab')
-# nltk.download('averaged_perceptron_tagger_eng')
-# nltk.download('maxent_ne_chunker_tab')
-# nltk.download('words')
-# nltk.download('stopwords')
-# nltk.download('wordnet')
-# nltk.download('vader_lexicon')
+
+
+# Initialize the News API client
 configure()
 newsapi = NewsApiClient(os.getenv('NEWS_KEY'))
 
 
-def news_fetch(symbol):
+def news_fetch(symbol: str) -> None:
+    """
+    Fetch the latest stock news articles for a given stock symbol from NewsAPI and Google News.
 
+    :param symbol: str - The stock symbol (e.g., 'AAPL' for Apple)
+    """
     end_date = dt.today()
     start_date = end_date - timedelta(days=30)
+
+    # Fetch news from NewsAPI
     newsapi_response = newsapi.get_everything(
         q=symbol,
         from_param=start_date,
@@ -41,16 +43,18 @@ def news_fetch(symbol):
     )
 
     news_data = []
+
+    # Parse the response from NewsAPI
     if newsapi_response.get('articles'):
         for article in newsapi_response['articles']:
             title = article['title']
-            published_at = article['publishedAt']
-            published_at = dt.strptime(published_at, "%Y-%m-%dT%H:%M:%SZ").strftime('%Y-%m-%d')
+            published_at = dt.strptime(article['publishedAt'], "%Y-%m-%dT%H:%M:%SZ").strftime('%Y-%m-%d')
             news_data.append({
                 'Title': title,
                 'Date': published_at
             })
 
+    # Fetch additional news from Google News
     google_news_url = f'https://news.google.com/rss/search?q={symbol}+stocks'
     google_news_response = requests.get(google_news_url)
     soup = BeautifulSoup(google_news_response.content, 'xml')
@@ -58,26 +62,42 @@ def news_fetch(symbol):
 
     for item in items:
         title = item.title.text
-        published_at = item.pubDate.text
-        published_at = dt.strptime(published_at, "%a, %d %b %Y %H:%M:%S %Z").strftime('%Y-%m-%d')
+        published_at = dt.strptime(item.pubDate.text, "%a, %d %b %Y %H:%M:%S %Z").strftime('%Y-%m-%d')
         news_data.append({
             'Title': title,
             'Date': published_at
         })
 
+    # Sort news articles by date in descending order
     news_data_sorted = sorted(news_data, key=lambda x: x['Date'], reverse=True)
     df = pd.DataFrame(news_data_sorted)
+
+    # Save the news data to a CSV file
     df.to_csv('stock_news.csv', index=False)
+    print(f"News data for {symbol} saved to 'stock_news.csv'.")
 
 
-def vaderpreprocess_text():
+def vaderpreprocess_text() -> None:
+    """
+    Process the text data from the CSV file, analyze sentiment using VADER, and add a column for compound sentiment scores.
+
+    The 'stock_news.csv' file must exist and contain a 'Title' column.
+    """
     df = pd.read_csv('stock_news.csv')
     sia = SentimentIntensityAnalyzer()
+
+    # List to store the sentiment scores
     res = []
+
+    # Analyze sentiment for each news title
     for i, row in df.iterrows():
         text = row["Title"]
         sentiment = sia.polarity_scores(text)
         res.append(sentiment['compound'])
+
+    # Add the sentiment scores to the DataFrame
     df['Compound Sentiment'] = res
-    df.to_csv('stock_news.csv', index='false')
+
+    # Save the updated DataFrame back to CSV
+    df.to_csv('stock_news.csv', index=False)
     print("Compound sentiment scores added to the CSV file under the 'Compound Sentiment' column.")
