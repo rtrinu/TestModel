@@ -11,7 +11,7 @@ def main():
     end_date = dt.datetime(2024, 12, 31)
     example = Stock(stock, start_date, end_date)
     # example.plot_data()
-    run_models('Compound_AI.csv')
+    #run_models('Compound_AI.csv')
 
 
 if __name__ == "__main__":

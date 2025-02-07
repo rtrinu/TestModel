@@ -1,4 +1,5 @@
 from News import vaderpreprocess_text, news_fetch
+from lstmModel import lstmModel
 import yfinance as yf
 import pandas as pd
 import pandas_ta as ta
@@ -14,7 +15,9 @@ class Stock:
         :param start_date: The start date for the stock data (optional).
         :param end_date: The end date for the stock data (optional).
         """
+        self.stock_name = None
         self.stock_symbol = stock_symbol
+        self.stock_symbol_upper = stock_symbol.upper()
         self.start_date = start_date
         self.end_date = end_date
         self.df = None
@@ -43,6 +46,7 @@ class Stock:
         stock_dict = self.fetch_sp500_data()
         user_stock_upper = user_stock.upper()
         stock_symbol, stock_name = self.get_stock_symbol_from_name(user_stock_upper, stock_dict)
+        self.stock_name = stock_name
 
         if not stock_symbol:
             print(f"Stock symbol or name '{user_stock}' not found in S&P 500.")
@@ -57,7 +61,7 @@ class Stock:
 
         self.df = self.df.reset_index()
         self.add_technical_indicators()
-        self.save_to_csv()
+        self.save_to_csv(f"{self.stock_symbol_upper}_historical_data.csv")
 
     def get_stock_symbol_from_name(self, user_stock: str, stock_dict: dict) -> tuple:
         """
@@ -101,7 +105,7 @@ class Stock:
         self.df['MACD_histogram'] = macd['MACDh_12_26_9']
 
         self.df.dropna(inplace=True)
-        self.save_to_csv()
+        self.save_to_csv(f"{self.stock_symbol_upper}_historical_data.csv")
 
     def generate_technical_signals(self):
         """
@@ -120,7 +124,7 @@ class Stock:
         self.df.loc[buy_condition, 'Signal'] = 1  # Buy signal
         self.df.loc[sell_condition, 'Signal'] = -1  # Sell signal
 
-        self.save_to_csv()
+        self.save_to_csv(f"{self.stock_symbol_upper}_historical_data.csv")
 
     def backtest(self, initial_balance: int = 10000):
         """
@@ -184,7 +188,7 @@ class Stock:
         plt.tight_layout()
         plt.show()
 
-    def save_to_csv(self, filename: str = 'historical_data.csv'):
+    def save_to_csv(self, filename:str):
         """
         Saves the stock data (contained in `self.df`) to a CSV file.
 
@@ -203,8 +207,7 @@ class Stock:
         :param user_stock: str, stock symbol or company name to fetch data for
         :return: None
         """
-        user_stock_upper = user_stock.upper()
-        stock_symbol, stock_name = self.get_stock_symbol_from_name(user_stock_upper, stock_dict)
+        stock_symbol, stock_name = self.get_stock_symbol_from_name(self.stock_symbol_upper, self.stock_dict)
         news_fetch(stock_name)
         vaderpreprocess_text()
 
@@ -222,8 +225,8 @@ class Stock:
         df2 = pd.read_csv("stock_news.csv")
 
         # Select relevant columns from the historical stock data
-        historical_data_cols = df1[['Date', 'Open', 'Open_Shifted', 'Close', 'Close_Shifted']]
-        technical_indicator_cols = df1[['RSI', 'SMA_50', 'EMA_20', 'MACD', 'Signal']]
+        historical_data_cols = df1[['Date', 'Open', 'Close','High', 'Low', 'Previous_Close','Volume']]
+        technical_indicator_cols = df1[['RSI', 'SMA_50', 'EMA_20', 'MACD','MACD_signal', 'MACD_histogram', 'Signal']]
 
         # Select the Compound Sentiment from the news data
         compound_sentiment = df2['Compound Sentiment']
@@ -232,7 +235,8 @@ class Stock:
         dataframe = pd.concat([historical_data_cols, technical_indicator_cols, compound_sentiment], axis=1)
 
         # Save the merged DataFrame to a new CSV file
-        dataframe.to_csv('Compound_AI.csv', index=False)
+        dataframe.to_csv(f'{self.stock_symbol_upper}_Compound_AI.csv', index=False)
+        lstm = lstmModel(f'{self.stock_symbol_upper}_Compound_AI.csv')
         print("Merged data saved to 'Compound_AI.csv'.")
 
     def initialise(self):
