@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler, RobustScaler
+from sklearn.metrics import classification_report
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dense, Dropout, Input
 from tensorflow.keras.callbacks import EarlyStopping
@@ -9,7 +10,7 @@ from keras.optimizers import Adam
 
 
 class lstmModel:
-    def __init__(self, filename: str, time_steps: int = 10, test_size: int = 0.1):
+    def __init__(self, filename: str, time_steps: int = 10, test_size: int = 0.2):
         self.y_test = None
         self.y_train = None
         self.x_test = None
@@ -51,15 +52,15 @@ class lstmModel:
         return self.x_train, self.x_test, self.y_train, self.y_test
 
     def build_model(self, input_shape):
-        model = model = Sequential([
+        model = Sequential([
             Input(shape=input_shape),
             LSTM(units=100, return_sequences=True),
             Dropout(0.2),
             LSTM(units=50, return_sequences=False),
             Dropout(0.2),
-            Dense(units=1)
+            Dense(units=1, activation='sigmoid')
         ])
-        model.compile(optimizer=Adam(), loss='binary_crossentropy', metrics=['accuracy'])
+        model.compile(optimizer=Adam(learning_rate=0.0001), loss='binary_crossentropy', metrics=['accuracy'])
         self.model = model
 
     def train_model(self, x_train, y_train, x_test, y_test, epochs=50, batch_size=32):
@@ -80,14 +81,17 @@ class lstmModel:
     def predict(self,x_input):
         x_input = x_input.reshape(x_input.shape[0], self.time_steps, x_input.shape[2])
         predictions=self.model.predict(x_input)
-        return predictions
+        predicted_classes = (predictions>0.5).astype(int)
+        print(predicted_classes)
 
     def initialise(self):
         self.load_and_preprocess_data()
         self.build_model(input_shape=(self.x_train.shape[1], self.x_train.shape[2]))
         self.train_model(self.x_train, self.y_train,self.x_test,self.y_test)
         loss, accuracy = self.evaluate_model(self.x_test, self.y_test)
+        predictions = self.predict(self.x_test)
         print(f"Test Loss: {loss}, Test Accuracy: {accuracy}")
+
 
 
 
