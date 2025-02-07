@@ -3,14 +3,17 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler, RobustScaler
 from sklearn.metrics import classification_report
-from tensorflow.keras.models import Sequential
+from tensorflow.keras.models import Sequential, load_model
 from tensorflow.keras.layers import LSTM, Dense, Dropout, Input
 from tensorflow.keras.callbacks import EarlyStopping
 from keras.optimizers import Adam
+import joblib
 
 
 class lstmModel:
     def __init__(self, filename: str, time_steps: int = 10, test_size: int = 0.2):
+        self.robust_scaler = None
+        self.minmax_scaler = None
         self.y_test = None
         self.y_train = None
         self.x_test = None
@@ -29,7 +32,6 @@ class lstmModel:
 
     def load_and_preprocess_data(self):
         df = pd.read_csv(self.filename)
-
         df = df.drop(columns=['Date', 'Price'], errors='ignore').dropna()
 
         minmax_scaler = MinMaxScaler(feature_range=(0, 1))
@@ -73,16 +75,32 @@ class lstmModel:
                        callbacks=[early_stop]
                        )
 
-    def evaluate_model(self,x_test,y_test):
-        x_test=x_test.reshape(x_test.shape[0], self.time_steps, x_test.shape[2])
-        loss,accuracy = self.model.evaluate(x_test,y_test)
+    def evaluate_model(self, x_test, y_test):
+        if x_test is None:
+            print("x_test is None. Ensure data is loaded and preprocessed correctly.")
+            return None, None
+        x_test = x_test.reshape(x_test.shape[0], self.time_steps, x_test.shape[2])
+        loss, accuracy = self.model.evaluate(x_test, y_test)
         return loss, accuracy
 
-    def predict(self,x_input):
+    def predict(self, x_input):
         x_input = x_input.reshape(x_input.shape[0], self.time_steps, x_input.shape[2])
-        predictions=self.model.predict(x_input)
-        predicted_classes = (predictions>0.5).astype(int)
+        predictions = self.model.predict(x_input)
+        predicted_classes = (predictions > 0.5).astype(int)
         print(predicted_classes)
+        print(classification_report(self.y_test, predicted_classes))
+
+    def save_model_and_scalers(self, model_path='lstm_model.h5', scalers_path='scalers.pkl'):
+        self.model.save(model_path)
+        joblib.dump({'minmax': self.minmax_scaler, 'robust': self.robust_scaler}, scalers_path)
+        print(f"Model saved to {model_path} and scalers to {scalers_path}.")
+
+    def load_model_and_scalers(self, model_path='lstm_model.h5', scalers_path='scalers.pkl'):
+        self.model = load_model(model_path)
+        scalers = joblib.load(scalers_path)
+        self.minmax_scaler = scalers['minmax']
+        self.robust_scaler = scalers['robust']
+        print(f"Model loaded from {model_path} and scalers from {scalers_path}.")
 
     def initialise(self):
         self.load_and_preprocess_data()
@@ -91,7 +109,4 @@ class lstmModel:
         loss, accuracy = self.evaluate_model(self.x_test, self.y_test)
         predictions = self.predict(self.x_test)
         print(f"Test Loss: {loss}, Test Accuracy: {accuracy}")
-
-
-
 
