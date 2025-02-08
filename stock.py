@@ -1,5 +1,6 @@
 from News import vaderpreprocess_text, news_fetch
 from lstmModel import lstmModel
+from randomForestModel import randomForestModel
 import yfinance as yf
 import pandas as pd
 import pandas_ta as ta
@@ -236,7 +237,8 @@ class Stock:
 
         # Save the merged DataFrame to a new CSV file
         dataframe.to_csv(f'{self.stock_symbol_upper}_Compound_AI.csv', index=False)
-        lstm = lstmModel(f'{self.stock_symbol_upper}_Compound_AI.csv')
+        #lstm = lstmModel(f'{self.stock_symbol_upper}_Compound_AI.csv')
+        rdfst = randomForestModel(f'{self.stock_symbol_upper}_Compound_AI.csv')
         print("Merged data saved to 'Compound_AI.csv'.")
 
     def initialise(self):
