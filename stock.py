@@ -1,4 +1,4 @@
-from News import vaderpreprocess_text, news_fetch
+from News import StockNews
 from lstmModel import lstmModel
 from randomForestModel import randomForestModel
 import yfinance as yf
@@ -202,15 +202,13 @@ class Stock:
         else:
             print("No data to save.")
 
-    def get_news_articles(self, user_stock: str):
+    def get_news_articles(self):
         """
         Gathers news articles about the company and creates a compound sentiment using outside methods from News
         :param user_stock: str, stock symbol or company name to fetch data for
         :return: None
         """
-        stock_symbol, stock_name = self.get_stock_symbol_from_name(self.stock_symbol_upper, self.stock_dict)
-        news_fetch(stock_name)
-        vaderpreprocess_text()
+        news = StockNews(self.stock_name)
 
     def merge_ai_csv(self):
         """
@@ -222,8 +220,8 @@ class Stock:
         :return: None
         """
         # Load the historical stock data and news data
-        df1 = pd.read_csv("historical_data.csv")
-        df2 = pd.read_csv("stock_news.csv")
+        df1 = pd.read_csv(f"{self.stock_symbol_upper}_historical_data.csv")
+        df2 = pd.read_csv(f"{self.stock_name}_stock_news.csv")
 
         # Select relevant columns from the historical stock data
         historical_data_cols = df1[['Date', 'Open', 'Close','High', 'Low', 'Previous_Close','Volume']]
@@ -250,5 +248,5 @@ class Stock:
         self.gather_data(self.stock_symbol)
         self.generate_technical_signals()
         #self.backtest()
-        self.get_stock_symbol_from_name(self.stock_symbol, self.stock_dict)
+        self.get_news_articles()
         self.merge_ai_csv()

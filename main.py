@@ -1,4 +1,4 @@
-from News import vaderpreprocess_text, news_fetch
+
 from stock import Stock
 from AiModels import run_models
 import pandas as pd

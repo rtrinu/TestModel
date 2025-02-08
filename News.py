@@ -20,7 +20,7 @@ class StockNews:
         """
         self.configure()
         self.newsapi_key = os.getenv('NEWS_KEY')
-        self.newsapi = NewsApiClient(api_key=self.newsapi_key)
+        self.newsapi = NewsApiClient(self.newsapi_key)
         self.sia = SentimentIntensityAnalyzer()
         self.symbol = symbol
 
