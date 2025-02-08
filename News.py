@@ -11,93 +11,104 @@ from nltk.sentiment import SentimentIntensityAnalyzer
 
 
 # Load environment variables
-def configure() -> None:
-    """
-    Configure the environment by loading environment variables from a .env file.
-    """
-    load_dotenv()
+class StockNews:
+    def __init__(self,symbol:str) -> None:
+        """
+        Initializes the StockNewsAnalyzer class.
 
+        :param news_api_key: str - Your NewsAPI key.
+        """
+        self.configure()
+        self.newsapi_key = os.getenv('NEWS_KEY')
+        self.newsapi = NewsApiClient(api_key=self.newsapi_key)
+        self.sia = SentimentIntensityAnalyzer()
+        self.symbol = symbol
 
-# Initialize the News API client
-configure()
-newsapi = NewsApiClient(os.getenv('NEWS_KEY'))
+        self.initalise()
 
+    def configure(self) -> None:
+        """
+        Configure the environment by loading environment variables from a .env file.
+        """
+        load_dotenv()
 
-def news_fetch(symbol: str) -> None:
-    """
-    Fetch the latest stock news articles for a given stock symbol from NewsAPI and Google News.
+    def news_fetch(self, symbol: str) -> None:
+        """
+        Fetch the latest stock news articles for a given stock symbol from NewsAPI and Google News.
 
-    :param symbol: str - The stock symbol (e.g., 'AAPL' for Apple)
-    """
-    end_date = dt.today()
-    start_date = end_date - timedelta(days=30)
+        :param symbol: str - The stock symbol (e.g., 'AAPL' for Apple)
+        """
+        end_date = dt.today()
+        start_date = end_date - timedelta(days=30)
 
-    # Fetch news from NewsAPI
-    newsapi_response = newsapi.get_everything(
-        q=symbol,
-        from_param=start_date,
-        to=end_date,
-        language='en',
-        sort_by='publishedAt',
-        page_size=1
-    )
+        # Fetch news from NewsAPI
+        newsapi_response = self.newsapi.get_everything(
+            q=symbol,
+            from_param=start_date,
+            to=end_date,
+            language='en',
+            sort_by='publishedAt',
+            page_size=1
+        )
 
-    news_data = []
+        news_data = []
 
-    # Parse the response from NewsAPI
-    if newsapi_response.get('articles'):
-        for article in newsapi_response['articles']:
-            title = article['title']
-            published_at = dt.strptime(article['publishedAt'], "%Y-%m-%dT%H:%M:%SZ").strftime('%Y-%m-%d')
+        # Parse the response from NewsAPI
+        if newsapi_response.get('articles'):
+            for article in newsapi_response['articles']:
+                title = article['title']
+                published_at = dt.strptime(article['publishedAt'], "%Y-%m-%dT%H:%M:%SZ").strftime('%Y-%m-%d')
+                news_data.append({
+                    'Title': title,
+                    'Date': published_at
+                })
+
+        # Fetch additional news from Google News
+        google_news_url = f'https://news.google.com/rss/search?q={symbol}+stocks'
+        google_news_response = requests.get(google_news_url)
+        soup = BeautifulSoup(google_news_response.content, 'xml')
+        items = soup.find_all('item')
+
+        for item in items:
+            title = item.title.text
+            published_at = dt.strptime(item.pubDate.text, "%a, %d %b %Y %H:%M:%S %Z").strftime('%Y-%m-%d')
             news_data.append({
                 'Title': title,
                 'Date': published_at
             })
 
-    # Fetch additional news from Google News
-    google_news_url = f'https://news.google.com/rss/search?q={symbol}+stocks'
-    google_news_response = requests.get(google_news_url)
-    soup = BeautifulSoup(google_news_response.content, 'xml')
-    items = soup.find_all('item')
+        # Sort news articles by date in descending order
+        news_data_sorted = sorted(news_data, key=lambda x: x['Date'], reverse=True)
+        df = pd.DataFrame(news_data_sorted)
 
-    for item in items:
-        title = item.title.text
-        published_at = dt.strptime(item.pubDate.text, "%a, %d %b %Y %H:%M:%S %Z").strftime('%Y-%m-%d')
-        news_data.append({
-            'Title': title,
-            'Date': published_at
-        })
+        # Save the news data to a CSV file
+        df.to_csv(f'{symbol}_stock_news.csv', index=False)
+        print(f"News data for {symbol} saved to '{symbol}_stock_news.csv'.")
 
-    # Sort news articles by date in descending order
-    news_data_sorted = sorted(news_data, key=lambda x: x['Date'], reverse=True)
-    df = pd.DataFrame(news_data_sorted)
+    def vaderpreprocess_text(self, csv_file: str) -> None:
+        """
+        Process the text data from the CSV file, analyze sentiment using VADER, and add a column for compound sentiment scores.
 
-    # Save the news data to a CSV file
-    df.to_csv('stock_news.csv', index=False)
-    print(f"News data for {symbol} saved to 'stock_news.csv'.")
+        :param csv_file: str - The name of the CSV file (e.g., 'AAPL_stock_news.csv').
+        """
+        df = pd.read_csv(csv_file)
 
+        # List to store the sentiment scores
+        res = []
 
-def vaderpreprocess_text() -> None:
-    """
-    Process the text data from the CSV file, analyze sentiment using VADER, and add a column for compound sentiment scores.
+        # Analyze sentiment for each news title
+        for i, row in df.iterrows():
+            text = row["Title"]
+            sentiment = self.sia.polarity_scores(text)
+            res.append(sentiment['compound'])
 
-    The 'stock_news.csv' file must exist and contain a 'Title' column.
-    """
-    df = pd.read_csv('stock_news.csv')
-    sia = SentimentIntensityAnalyzer()
+        # Add the sentiment scores to the DataFrame
+        df['Compound Sentiment'] = res
 
-    # List to store the sentiment scores
-    res = []
+        # Save the updated DataFrame back to CSV
+        df.to_csv(csv_file, index=False)
+        print(f"Compound sentiment scores added to the CSV file '{csv_file}' under the 'Compound Sentiment' column.")
 
-    # Analyze sentiment for each news title
-    for i, row in df.iterrows():
-        text = row["Title"]
-        sentiment = sia.polarity_scores(text)
-        res.append(sentiment['compound'])
-
-    # Add the sentiment scores to the DataFrame
-    df['Compound Sentiment'] = res
-
-    # Save the updated DataFrame back to CSV
-    df.to_csv('stock_news.csv', index=False)
-    print("Compound sentiment scores added to the CSV file under the 'Compound Sentiment' column.")
+    def initalise(self):
+        self.news_fetch(self.symbol)
+        self.vaderpreprocess_text(f"{self.symbol}_stock_news.csv")

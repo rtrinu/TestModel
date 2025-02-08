@@ -24,6 +24,13 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="\apple_stock_news.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="\historical_data.csv">
           <value>
             <Attribute>
