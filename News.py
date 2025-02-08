@@ -41,7 +41,7 @@ class StockNews:
         end_date = dt.today()
         start_date = end_date - timedelta(days=30)
 
-        # Fetch news from NewsAPI
+
         newsapi_response = self.newsapi.get_everything(
             q=symbol,
             from_param=start_date,
