@@ -1,3 +1,5 @@
+import os.path
+
 from News import StockNews
 from lstmModel import lstmModel
 from randomForestModel import randomForestModel
@@ -220,6 +222,7 @@ class Stock:
         :return: None
         """
         # Load the historical stock data and news data
+
         df1 = pd.read_csv(f"{self.stock_symbol_upper}_historical_data.csv")
         df2 = pd.read_csv(f"{self.stock_name}_stock_news.csv")
 
@@ -235,10 +238,20 @@ class Stock:
 
         # Save the merged DataFrame to a new CSV file
         dataframe.to_csv(f'{self.stock_symbol_upper}_Compound_AI.csv', index=False)
+
+
         #lstm = lstmModel(f'{self.stock_symbol_upper}_Compound_AI.csv')
         rdfst = randomForestModel(f'{self.stock_symbol_upper}_Compound_AI.csv')
-        print("Merged data saved to 'Compound_AI.csv'.")
+        print(f"Merged data saved to '{self.stock_symbol_upper}_Compound_AI.csv'.")
 
+    def remove_csv_files(self):
+        file_path = [f"{self.stock_symbol_upper}_historical_data.csv", f"{self.stock_name}_stock_news.csv"]
+        for file in file_path:
+            if os.path.exists(file):
+                os.remove(file)
+                print(f"{file} deleted successfully")
+            else:
+                print(f"{file} not found")
     def initialise(self):
         """
         Initializes the process by gathering data, generating technical signals, and backtesting.
@@ -250,3 +263,4 @@ class Stock:
         #self.backtest()
         self.get_news_articles()
         self.merge_ai_csv()
+        self.remove_csv_files()
