@@ -6,6 +6,7 @@ from sklearn.metrics import classification_report
 from tensorflow.keras.models import Sequential, load_model
 from tensorflow.keras.layers import LSTM, Dense, Dropout, Input
 from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras.utils import to_categorical
 from keras.optimizers import Adam
 import joblib
 
@@ -41,7 +42,7 @@ class lstmModel:
         df[self.robust_features] = robust_scaler.fit_transform(df[self.robust_features])
 
         x = df[self.features].values
-        y = df['Signal'].values
+        y = to_categorical(df['Signal'], num_classes=3)
 
         X_seq, y_seq = [], []
         for i in range(len(x) - self.time_steps):
@@ -60,9 +61,9 @@ class lstmModel:
             Dropout(0.2),
             LSTM(units=50, return_sequences=False),
             Dropout(0.2),
-            Dense(units=1, activation='sigmoid')
+            Dense(units=3, activation='softmax')
         ])
-        model.compile(optimizer=Adam(learning_rate=0.0001), loss='binary_crossentropy', metrics=['accuracy'])
+        model.compile(optimizer=Adam(learning_rate=0.0001), loss='categorical_crossentropy', metrics=['accuracy'])
         self.model = model
 
     def train_model(self, x_train, y_train, x_test, y_test, epochs=50, batch_size=32):
@@ -88,7 +89,7 @@ class lstmModel:
         predictions = self.model.predict(x_input)
         predicted_classes = (predictions > 0.5).astype(int)
         print(predicted_classes)
-        print(classification_report(self.y_test, predicted_classes))
+        # print(classification_report(self.y_test, predicted_classes))
 
     def save_model_and_scalers(self, model_path='lstm_model.h5', scalers_path='scalers.pkl'):
         self.model.save(model_path)
@@ -105,8 +106,9 @@ class lstmModel:
     def initialise(self):
         self.load_and_preprocess_data()
         self.build_model(input_shape=(self.x_train.shape[1], self.x_train.shape[2]))
-        self.train_model(self.x_train, self.y_train,self.x_test,self.y_test)
+        self.train_model(self.x_train, self.y_train, self.x_test, self.y_test)
         loss, accuracy = self.evaluate_model(self.x_test, self.y_test)
-        predictions = self.predict(self.x_test)
-        print(f"Test Loss: {loss}, Test Accuracy: {accuracy}")
+        print(np.unique(self.y_train))  # Should output [0, 1]
 
+        # predictions = self.predict(self.x_test)
+        print(f"LSTM Model: \nTest Loss: {loss}, Test Accuracy: {accuracy}")
