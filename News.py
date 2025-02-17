@@ -12,7 +12,7 @@ from nltk.sentiment import SentimentIntensityAnalyzer
 
 # Load environment variables
 class StockNews:
-    def __init__(self,symbol:str) -> None:
+    def __init__(self, symbol: str) -> None:
         """
         Initializes the StockNewsAnalyzer class.
 
@@ -40,7 +40,6 @@ class StockNews:
         """
         end_date = dt.today()
         start_date = end_date - timedelta(days=30)
-
 
         newsapi_response = self.newsapi.get_everything(
             q=symbol,

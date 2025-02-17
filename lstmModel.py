@@ -1,3 +1,5 @@
+import os
+
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
@@ -13,6 +15,7 @@ import pickle
 
 class lstmModel:
     def __init__(self, filename: str, stock_name: str, time_steps: int = 10, test_size: int = 0.2):
+        self.model_folder = "models"
         self.robust_scaler = None
         self.minmax_scaler = None
         self.y_test = None
@@ -93,34 +96,44 @@ class lstmModel:
         # print(classification_report(self.y_test, predicted_classes))
 
     def save_model(self):
-        with open(f"{self.stock_name}_lstm_pickle", 'wb') as f:
+        if not os.path.exists(self.model_folder):
+            os.makedirs(self.model_folder)
+            print(f"Model folder '{self.model_folder}' created.")
+
+        model_file = os.path.join(self.model_folder, f"{self.stock_name}_lstm_pickle")
+
+        # Save the model to the file
+        with open(model_file, 'wb') as f:
             pickle.dump(self.model, f)
+        print(f"Model saved to {model_file}")
 
     def load_model(self):
+        model_file = os.path.join(self.model_folder, f"{self.stock_name}_lstm_pickle")
         try:
-            with open(f"{self.stock_name}_lstm_pickle", 'rb') as f:
+            with open(model_file, 'rb') as f:
                 self.model = pickle.load(f)
-            print("Model loaded successfully.")
+            print(f"Model loaded successfully from {model_file}")
         except FileNotFoundError:
-            print("Model file not found. Proceeding to train a new model.")
+            print(f"Model file {model_file} not found. Proceeding to train a new model.")
             self.model = None
         except Exception as e:
             print(f"An unexpected error occurred while loading the model: {e}")
 
-    def initialise(self):
-        self.load_model()
-        self.load_and_preprocess_data()
-        if self.model is None:
-            print("Training new model...")
-            self.build_model(input_shape=(self.x_train.shape[1], self.x_train.shape[2]))
-            self.train_model(self.x_train, self.y_train, self.x_test, self.y_test)
-            loss, accuracy = self.evaluate_model(self.x_test, self.y_test)
-            print(np.unique(self.y_train))  # Should output [0, 1]
 
-            # predictions = self.predict(self.x_test)
-            print(f"LSTM Model: \nTest Loss: {loss}, Test Accuracy: {accuracy}")
-            self.save_model()
-        else:
-            print("Using saved model...")
-            loss, accuracy = self.evaluate_model(self.x_test, self.y_test)
-            print(f"LSTM Model: \nTest Loss: {loss}, Test Accuracy: {accuracy}")
+    def initialise(self):
+            self.load_model()
+            self.load_and_preprocess_data()
+            if self.model is None:
+                print("Training new model...")
+                self.build_model(input_shape=(self.x_train.shape[1], self.x_train.shape[2]))
+                self.train_model(self.x_train, self.y_train, self.x_test, self.y_test)
+                loss, accuracy = self.evaluate_model(self.x_test, self.y_test)
+                print(np.unique(self.y_train))  # Should output [0, 1]
+
+                # predictions = self.predict(self.x_test)
+                print(f"LSTM Model: \nTest Loss: {loss}, Test Accuracy: {accuracy}")
+                self.save_model()
+            else:
+                print("Using saved model...")
+                loss, accuracy = self.evaluate_model(self.x_test, self.y_test)
+                print(f"LSTM Model: \nTest Loss: {loss}, Test Accuracy: {accuracy}")

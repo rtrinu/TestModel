@@ -222,31 +222,36 @@ class Stock:
         DataFrame which is then saved to a new CSV file.
         :return: None
         """
+        try:
+            data = pd.read_csv(f"{self.stock_name}_Compound_AI.csv")
+            print("Compound CSV file already made")
+        except FileNotFoundError:
+            print("Creating CSV file")
+            df1 = pd.read_csv(f"{self.stock_name}_historical_data.csv")
+            df2 = pd.read_csv(f"{self.stock_name}_stock_news.csv")
+
+            # Select relevant columns from the historical stock data
+            historical_data_cols = df1[['Date', 'Open', 'Close', 'High', 'Low', 'Previous_Close', 'Volume']]
+            technical_indicator_cols = df1[
+                ['RSI', 'SMA_50', 'EMA_20', 'MACD', 'MACD_signal', 'MACD_histogram', 'Signal']]
+
+            # Select the Compound Sentiment from the news data
+            compound_sentiment = df2['Compound Sentiment']
+            dataframe = pd.concat([historical_data_cols, technical_indicator_cols, compound_sentiment], axis=1)
+
+            # Save the merged DataFrame to a new CSV file
+            dataframe.to_csv(f'{self.stock_name}_Compound_AI.csv', index=False)
+
         # Load the historical stock data and news data
-
-        df1 = pd.read_csv(f"{self.stock_name}_historical_data.csv")
-        df2 = pd.read_csv(f"{self.stock_name}_stock_news.csv")
-
-        # Select relevant columns from the historical stock data
-        historical_data_cols = df1[['Date', 'Open', 'Close', 'High', 'Low', 'Previous_Close', 'Volume']]
-        technical_indicator_cols = df1[['RSI', 'SMA_50', 'EMA_20', 'MACD', 'MACD_signal', 'MACD_histogram', 'Signal']]
-
-        # Select the Compound Sentiment from the news data
-        compound_sentiment = df2['Compound Sentiment']
-
-        # Merge all data into a single DataFrame
-        dataframe = pd.concat([historical_data_cols, technical_indicator_cols, compound_sentiment], axis=1)
-
-        # Save the merged DataFrame to a new CSV file
-        dataframe.to_csv(f'{self.stock_name}_Compound_AI.csv', index=False)
-
         lstm = lstmModel(f'{self.stock_name}_Compound_AI.csv', self.stock_name)
         # rdfst = randomForestModel(f'{self.stock_name}_Compound_AI.csv')
 
-        print(f"Merged data saved to '{self.stock_name}_Compound_AI.csv'.")
+
+        #print(f"Merged data saved to '{self.stock_name}_Compound_AI.csv'.")
 
     def remove_csv_files(self):
-        file_path = [f"{self.stock_name}_historical_data.csv", f"{self.stock_name}_stock_news.csv"]
+        file_path = [f"{self.stock_name}_historical_data.csv", f"{self.stock_name}_stock_news.csv",
+                     f"{self.stock_name}_Compound_AI.csv"]
         for file in file_path:
             if os.path.exists(file):
                 os.remove(file)
