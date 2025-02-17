@@ -3,6 +3,7 @@ import os.path
 from News import StockNews
 from lstmModel import lstmModel
 from randomForestModel import randomForestModel
+
 import yfinance as yf
 import pandas as pd
 import pandas_ta as ta
@@ -64,7 +65,7 @@ class Stock:
 
         self.df = self.df.reset_index()
         self.add_technical_indicators()
-        self.save_to_csv(f"{self.stock_symbol_upper}_historical_data.csv")
+        self.save_to_csv(f"{self.stock_name}_historical_data.csv")
 
     def get_stock_symbol_from_name(self, user_stock: str, stock_dict: dict) -> tuple:
         """
@@ -108,7 +109,7 @@ class Stock:
         self.df['MACD_histogram'] = macd['MACDh_12_26_9']
 
         self.df.dropna(inplace=True)
-        self.save_to_csv(f"{self.stock_symbol_upper}_historical_data.csv")
+        self.save_to_csv(f"{self.stock_name}_historical_data.csv")
 
     def generate_technical_signals(self):
         """
@@ -127,7 +128,7 @@ class Stock:
         self.df.loc[buy_condition, 'Signal'] = 1  # Buy signal
         self.df.loc[sell_condition, 'Signal'] = -1  # Sell signal
 
-        self.save_to_csv(f"{self.stock_symbol_upper}_historical_data.csv")
+        self.save_to_csv(f"{self.stock_name}_historical_data.csv")
 
     def backtest(self, initial_balance: int = 10000):
         """
@@ -191,7 +192,7 @@ class Stock:
         plt.tight_layout()
         plt.show()
 
-    def save_to_csv(self, filename:str):
+    def save_to_csv(self, filename: str):
         """
         Saves the stock data (contained in `self.df`) to a CSV file.
 
@@ -223,12 +224,12 @@ class Stock:
         """
         # Load the historical stock data and news data
 
-        df1 = pd.read_csv(f"{self.stock_symbol_upper}_historical_data.csv")
+        df1 = pd.read_csv(f"{self.stock_name}_historical_data.csv")
         df2 = pd.read_csv(f"{self.stock_name}_stock_news.csv")
 
         # Select relevant columns from the historical stock data
-        historical_data_cols = df1[['Date', 'Open', 'Close','High', 'Low', 'Previous_Close','Volume']]
-        technical_indicator_cols = df1[['RSI', 'SMA_50', 'EMA_20', 'MACD','MACD_signal', 'MACD_histogram', 'Signal']]
+        historical_data_cols = df1[['Date', 'Open', 'Close', 'High', 'Low', 'Previous_Close', 'Volume']]
+        technical_indicator_cols = df1[['RSI', 'SMA_50', 'EMA_20', 'MACD', 'MACD_signal', 'MACD_histogram', 'Signal']]
 
         # Select the Compound Sentiment from the news data
         compound_sentiment = df2['Compound Sentiment']
@@ -237,21 +238,22 @@ class Stock:
         dataframe = pd.concat([historical_data_cols, technical_indicator_cols, compound_sentiment], axis=1)
 
         # Save the merged DataFrame to a new CSV file
-        dataframe.to_csv(f'{self.stock_symbol_upper}_Compound_AI.csv', index=False)
+        dataframe.to_csv(f'{self.stock_name}_Compound_AI.csv', index=False)
 
+        # lstm = lstmModel(f'{self.stock_name}_Compound_AI.csv')
+        # rdfst = randomForestModel(f'{self.stock_name}_Compound_AI.csv')
 
-        #lstm = lstmModel(f'{self.stock_symbol_upper}_Compound_AI.csv')
-        rdfst = randomForestModel(f'{self.stock_symbol_upper}_Compound_AI.csv')
-        print(f"Merged data saved to '{self.stock_symbol_upper}_Compound_AI.csv'.")
+        print(f"Merged data saved to '{self.stock_name}_Compound_AI.csv'.")
 
     def remove_csv_files(self):
-        file_path = [f"{self.stock_symbol_upper}_historical_data.csv", f"{self.stock_name}_stock_news.csv"]
+        file_path = [f"{self.stock_name}_historical_data.csv", f"{self.stock_name}_stock_news.csv"]
         for file in file_path:
             if os.path.exists(file):
                 os.remove(file)
                 print(f"{file} deleted successfully")
             else:
                 print(f"{file} not found")
+
     def initialise(self):
         """
         Initializes the process by gathering data, generating technical signals, and backtesting.
@@ -260,7 +262,7 @@ class Stock:
         """
         self.gather_data(self.stock_symbol)
         self.generate_technical_signals()
-        #self.backtest()
+        # self.backtest()
         self.get_news_articles()
         self.merge_ai_csv()
         self.remove_csv_files()

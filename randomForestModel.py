@@ -32,13 +32,13 @@ class randomForestModel():
     def evaluate_model(self, x_test, y_test):
         y_pred = self.model.predict(x_test)
         mse = mean_squared_error(y_test, y_pred)
-        print(f"Mean Squared Error on test data: {mse}")
+        print(f"Random Forest Model: \nMean Squared Error on test data: {mse}")
         comparison_df = pd.DataFrame({
             'Actual': y_test,
             'Predicted': y_pred
         })
-        print("\nActual vs Predicted Values:")
-        print(comparison_df.head())
+        #print("\nActual vs Predicted Values:")
+        #print(comparison_df.head())
 
     def predict(self, x_input):
         return self.model.predict(x_input)
@@ -49,4 +49,4 @@ class randomForestModel():
         self.evaluate_model(self.x_test, self.y_test)
         future_data = self.x_test.head(5)
         predictions = self.predict(future_data)
-        print(f"Predictions: {predictions}")
+        #print(f"Random Forest Model: \nPredictions: {predictions}")
