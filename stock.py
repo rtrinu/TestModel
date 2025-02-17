@@ -240,7 +240,7 @@ class Stock:
         # Save the merged DataFrame to a new CSV file
         dataframe.to_csv(f'{self.stock_name}_Compound_AI.csv', index=False)
 
-        # lstm = lstmModel(f'{self.stock_name}_Compound_AI.csv')
+        lstm = lstmModel(f'{self.stock_name}_Compound_AI.csv', self.stock_name)
         # rdfst = randomForestModel(f'{self.stock_name}_Compound_AI.csv')
 
         print(f"Merged data saved to '{self.stock_name}_Compound_AI.csv'.")
