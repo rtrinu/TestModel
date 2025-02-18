@@ -3,7 +3,7 @@ import os.path
 from News import StockNews
 from lstmModel import lstmModel
 from randomForestModel import randomForestModel
-
+from SARHMM import SARHMM
 import yfinance as yf
 import pandas as pd
 import pandas_ta as ta
@@ -243,8 +243,9 @@ class Stock:
             dataframe.to_csv(f'{self.stock_name}_Compound_AI.csv', index=False)
 
         # Load the historical stock data and news data
-        lstm = lstmModel(f'{self.stock_name}_Compound_AI.csv', self.stock_name)
-        # rdfst = randomForestModel(f'{self.stock_name}_Compound_AI.csv')
+        #lstm = lstmModel(f'{self.stock_name}_Compound_AI.csv', self.stock_name)
+        #rdfst = randomForestModel(f'{self.stock_name}_Compound_AI.csv')
+        hmm = SARHMM(f'{self.stock_name}_Compound_AI.csv')
 
 
         #print(f"Merged data saved to '{self.stock_name}_Compound_AI.csv'.")
