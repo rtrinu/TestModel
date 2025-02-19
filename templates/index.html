@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Stock Trade Predictor</title>
     <link rel="stylesheet" href="static/styles.css">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
 </head>
 <body>
 
@@ -13,17 +15,16 @@
         <div class="logo"></div>
         <ul>
             <li><a href="#home">Home</a></li>
-            <li><a href="#features"></a></li>
-            <li><a href="#contact"></a></li>
-            <li><a href="#login"></a></li>
+            <li><a href="#features">Features</a></li>
+            <li><a href="#login">Login</a></li>
         </ul>
     </nav>
 </header>
 
 <section id="hero">
-    <h1></h1>
-    <p></p>
-    <a href="#signup" class="cta-button"></a>
+    <h1>AI-powered Stock Market Predictions</h1>
+    <p>Forecast the stock market with accurate and real-time insights</p>
+    <a href="#signup" class="cta-button">Get Started</a>
 </section>
 
 <section id="features">
@@ -57,7 +58,10 @@
 
 <section id="live-dashboard">
     <h2></h2>
-    <div class="chart"></div>
+    <div class="chart">
+        <img src="{{ url_for('serve_plot') }}" alt="Plot">
+
+    </div>
 </section>
 
 <section id="testimonials">
