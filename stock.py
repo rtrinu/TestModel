@@ -8,11 +8,11 @@ import yfinance as yf
 import pandas as pd
 import pandas_ta as ta
 import matplotlib.pyplot as plt
-
+import datetime as dt
 
 
 class Stock:
-    def __init__(self, stock_symbol: str, start_date: str = None, end_date: str = None):
+    def __init__(self, stock_symbol: str,):
         """
         Initialize the Stock object with stock symbol and date range.
 
@@ -23,8 +23,8 @@ class Stock:
         self.stock_name = None
         self.stock_symbol = stock_symbol
         self.stock_symbol_upper = stock_symbol.upper()
-        self.start_date = start_date
-        self.end_date = end_date
+        self.start_date = dt.datetime(2024, 1, 1)
+        self.end_date = dt.datetime(2024, 12, 31)
         self.df = None
         self.stock_dict = fetch_sp500_data()
         self.initialise()
