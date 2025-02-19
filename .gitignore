@@ -3,3 +3,5 @@ venv/
 models/
 __pycache__/
 .idea/
+yfinance_cache.sqlite
+.vscode/

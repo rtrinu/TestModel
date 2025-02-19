@@ -1,5 +1,5 @@
 import os.path
-
+from dictionary import fetch_sp500_data, get_stock_symbol_from_name
 from News import StockNews
 from lstmModel import lstmModel
 from randomForestModel import randomForestModel
@@ -8,6 +8,7 @@ import yfinance as yf
 import pandas as pd
 import pandas_ta as ta
 import matplotlib.pyplot as plt
+
 
 
 class Stock:
@@ -25,20 +26,10 @@ class Stock:
         self.start_date = start_date
         self.end_date = end_date
         self.df = None
-        self.stock_dict = self.fetch_sp500_data()
+        self.stock_dict = fetch_sp500_data()
         self.initialise()
 
-    def fetch_sp500_data(self) -> dict:
-        """
-        Fetches the S&P 500 companies' information and returns a dictionary mapping
-        stock symbols to company names.
 
-        :return: dict - Dictionary with stock symbols as keys and company names as values.
-        """
-        url = 'https://datahub.io/core/s-and-p-500-companies/r/constituents.csv'
-        sp500 = pd.read_csv(url)
-        sp500.to_csv('sp500_stocks.csv', index=False)
-        return dict(zip(sp500['Symbol'], sp500['Security']))
 
     def gather_data(self, user_stock: str):
         """
@@ -47,9 +38,9 @@ class Stock:
         :param user_stock: str, stock symbol or company name to fetch data for.
         :return: None
         """
-        stock_dict = self.fetch_sp500_data()
+        stock_dict = fetch_sp500_data()
         user_stock_upper = user_stock.upper()
-        stock_symbol, stock_name = self.get_stock_symbol_from_name(user_stock_upper, stock_dict)
+        stock_symbol, stock_name = get_stock_symbol_from_name(user_stock_upper, stock_dict)
         self.stock_name = stock_name
 
         if not stock_symbol:
@@ -67,21 +58,7 @@ class Stock:
         self.add_technical_indicators()
         self.save_to_csv(f"{self.stock_name}_historical_data.csv")
 
-    def get_stock_symbol_from_name(self, user_stock: str, stock_dict: dict) -> tuple:
-        """
-        Fetches the stock symbol from the stock dictionary using either the stock symbol or company name.
 
-        :param user_stock: str, stock symbol or company name.
-        :param stock_dict: dict, dictionary of stock symbols and company names.
-        :return: tuple - Stock symbol and stock name (or None if not found).
-        """
-        if user_stock in stock_dict:
-            return user_stock, stock_dict[user_stock]
-        else:
-            for symbol, name in stock_dict.items():
-                if user_stock.lower() in name.lower():
-                    return symbol, name
-        return None, None
 
     def add_technical_indicators(self):
         """
@@ -245,7 +222,7 @@ class Stock:
         # Load the historical stock data and news data
         #lstm = lstmModel(f'{self.stock_name}_Compound_AI.csv', self.stock_name)
         #rdfst = randomForestModel(f'{self.stock_name}_Compound_AI.csv')
-        hmm = SARHMM(f'{self.stock_name}_Compound_AI.csv')
+        #hmm = SARHMM(f'{self.stock_name}_Compound_AI.csv')
 
 
         #print(f"Merged data saved to '{self.stock_name}_Compound_AI.csv'.")
@@ -266,9 +243,14 @@ class Stock:
 
         :return: None
         """
+        
+       
         self.gather_data(self.stock_symbol)
-        self.generate_technical_signals()
-        # self.backtest()
-        self.get_news_articles()
-        self.merge_ai_csv()
-        self.remove_csv_files()
+        if self.stock_name == None:
+            print("Invalid User Input")
+        else:
+            self.generate_technical_signals()
+            # self.backtest()
+            self.get_news_articles()
+            self.merge_ai_csv()
+            self.remove_csv_files()
