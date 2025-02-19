@@ -107,31 +107,7 @@ class Stock:
 
         self.save_to_csv(f"{self.stock_name}_historical_data.csv")
 
-    def backtest(self, initial_balance: int = 10000):
-        """
-        Backtests the trading strategy using buy and sell signals.
 
-        :param initial_balance: int - The initial cash balance for the backtest.
-        :return: float - The final balance after performing the backtest.
-        """
-        if self.df is None or self.df.empty:
-            print("No data available for backtesting.")
-            return 0.0
-
-        balance = initial_balance
-        position = 0
-
-        for _, row in self.df.iterrows():
-            if row['Signal'] == 1:  # Buy
-                position = balance / row['Close']
-                balance = 0
-            elif row['Signal'] == -1 and position > 0:  # Sell
-                balance = position * row['Close']
-                position = 0
-
-        final_value = balance + (position * self.df['Close'].iloc[-1] if position > 0 else 0)
-        print(f"Initial Balance: ${initial_balance}, Final Balance: ${final_value:.2f}")
-        return final_value
 
     def plot_data(self):
         """
@@ -215,14 +191,12 @@ class Stock:
             # Select the Compound Sentiment from the news data
             compound_sentiment = df2['Compound Sentiment']
             dataframe = pd.concat([historical_data_cols, technical_indicator_cols, compound_sentiment], axis=1)
-
+            self.df = dataframe
             # Save the merged DataFrame to a new CSV file
             dataframe.to_csv(f'{self.stock_name}_Compound_AI.csv', index=False)
 
         # Load the historical stock data and news data
-        #lstm = lstmModel(f'{self.stock_name}_Compound_AI.csv', self.stock_name)
-        #rdfst = randomForestModel(f'{self.stock_name}_Compound_AI.csv')
-        #hmm = SARHMM(f'{self.stock_name}_Compound_AI.csv')
+
 
 
         #print(f"Merged data saved to '{self.stock_name}_Compound_AI.csv'.")
@@ -237,6 +211,14 @@ class Stock:
             else:
                 print(f"{file} not found")
 
+
+    def train_ai_models(self):
+        #lstm = lstmModel(f'{self.stock_name}_Compound_AI.csv', self.stock_name)
+        rdfst = randomForestModel(f'{self.stock_name}_Compound_AI.csv')
+        #hmm = SARHMM(f'{self.stock_name}_Compound_AI.csv')
+
+        self.remove_csv_files()
+
     def initialise(self):
         """
         Initializes the process by gathering data, generating technical signals, and backtesting.
@@ -250,7 +232,7 @@ class Stock:
             print("Invalid User Input")
         else:
             self.generate_technical_signals()
-            # self.backtest()
             self.get_news_articles()
             self.merge_ai_csv()
-            self.remove_csv_files()
+
+            
