@@ -28,25 +28,39 @@
 </section>
 
 <section id="features">
-    <h2></h2>
+
     <div class="feature-card">
-        <h3></h3>
-        <p></p>
+        <h3>Real-Time Stock Data</h3>
+        <p>Compare real-time stock prices of different companies and visualise 
+            the data for better decision making.
+        </p>
     </div>
     <div class="feature-card">
-        <h3></h3>
-        <p></p>
+        <h3>Predictive Modelling</h3>
+        <p>Leverage machine learning models that analyse historical stock prices
+            and other financial indicators to generate reliable predictions for short-term
+            and long-term investments
+        </p>
     </div>
     <div class="feature-card">
-        <h3></h3>
-        <p></p>
+        <h3>Easy-to-Use</h3>
+        <p>Our user-friendly interface allows you to easily input 
+            stock symbols/company names, view predictions, and get visual representations of
+        the predicted trends without any hassle </p>
     </div>
+    <div class="feature-card">
+        <h3>Easy-to-Use</h3>
+        <p>Our user-friendly interface allows you to easily input 
+            stock symbols/company names, view predictions, and get visual representations of
+        the predicted trends without any hassle </p>
+    </div>
+    
 </section>
 
 <section id="how-it-works">
-    <h2></h2>
+    <h2>How it Works</h2>
     <div class="step">
-        <p></p>
+        <p>HOORAY</p>
     </div>
     <div class="step">
         <p></p>
@@ -57,9 +71,11 @@
 </section>
 
 <section id="live-dashboard">
-    <h2></h2>
+    <h2>Live Dashboard</h2>
+    <p>Here's the plot comparing the stock closing prices of two randomly selected companies: </p>
     <div class="chart">
-        <img src="{{ url_for('serve_plot') }}" alt="Plot">
+        <img src="{{ url_for('send_image', filename=image_path) }}" alt="Stock Prices Plot" width="800">
+
 
     </div>
 </section>

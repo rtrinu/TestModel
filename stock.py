@@ -213,11 +213,13 @@ class Stock:
 
 
     def train_ai_models(self):
+
         #lstm = lstmModel(f'{self.stock_name}_Compound_AI.csv', self.stock_name)
         rdfst = randomForestModel(f'{self.stock_name}_Compound_AI.csv')
         #hmm = SARHMM(f'{self.stock_name}_Compound_AI.csv')
 
         self.remove_csv_files()
+
 
     def initialise(self):
         """
