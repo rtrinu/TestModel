@@ -6,17 +6,14 @@ import matplotlib.pyplot as plt
 from datetime import datetime as dt, timedelta
 import random as rnd
 import os
-from flask import Flask, render_template, send_file
+from flask import Flask, render_template, send_file, request
 from homepagefunction import plot_close_data
+from stock import Stock
 
-
-# Initialize Flask app
 app = Flask(__name__)
 
 if not os.path.exists('static'):
     os.makedirs('static')
-
-
 
 @app.route('/')
 def index():
@@ -24,11 +21,22 @@ def index():
     plot_image_path = plot_close_data(img_filename)
     return render_template('index.html', image_path = plot_image_path)
 
+
+@app.route('/stock_input')
+def stock_input():
+    return render_template('stockInput.html')
+
 @app.route('/static/<filename>')
 def send_image(filename):
     return send_file(f'static/{filename}')
 
+@app.route('/stock',methods=['GET'])
+def get_stock_data():
+    stock_symbol = request.args.get('symbol','').upper()
+    if not stock_symbol:
+        return "Please enter a valid symbol"
 
+    user_stock = Stock(stock_symbol)
 
 if __name__ == '__main__':
     app.run(debug=True)

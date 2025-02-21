@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Input</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='stockInputStyles.css') }}">
+</head>
+<body>
+
+    <header>
+        <nav>
+            <div class="logo">Stock Predictor</div>
+            <ul>
+                <li><a href="{{ url_for('index') }}">Home</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="stock-input-container">
+        <h2>Enter a Stock Symbol</h2>
+        <form action="{{ url_for('get_stock_data') }}" method="GET">
+            <input type="text" name="stock" placeholder="Enter stock symbol" required>
+            <button type="submit">Search</button>
+        </form>
+
+        <div id="back_home_button">
+            <a href="{{ url_for('index') }}">Back to Home</a>
+        </div>
+    </div>
+
+</body>
+</html>

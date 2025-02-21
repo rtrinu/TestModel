@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Stock Trade Predictor</title>
-    <link rel="stylesheet" href="static/styles.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='indexStyles.css') }}">
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 
 </head>
@@ -24,14 +24,16 @@
 <section id="hero">
     <h1>AI-powered Stock Market Predictions</h1>
     <p>Forecast the stock market with accurate and real-time insights</p>
-    <a href="#signup" class="cta-button">Get Started</a>
+    <a class="cta-button" href="{{ url_for('stock_input') }}">Get Started</a>
+
+    
 </section>
 
 <section id="features">
 
     <div class="feature-card">
         <h3>Real-Time Stock Data</h3>
-        <p>Compare real-time stock prices of different companies and visualise 
+        <p>Compare real-time stock prices of different companies and visualize 
             the data for better decision making.
         </p>
     </div>
@@ -75,8 +77,6 @@
     <p>Here's the plot comparing the stock closing prices of two randomly selected companies: </p>
     <div class="chart">
         <img src="{{ url_for('send_image', filename=image_path) }}" alt="Stock Prices Plot" width="800">
-
-
     </div>
 </section>
 
