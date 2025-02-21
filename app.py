@@ -32,11 +32,13 @@ def send_image(filename):
 
 @app.route('/stock',methods=['GET'])
 def get_stock_data():
-    stock_symbol = request.args.get('symbol','').upper()
+    stock_symbol = request.args.get('stock','').upper()
     if not stock_symbol:
-        return "Please enter a valid symbol"
+        return "Input a valid symbol"
 
     user_stock = Stock(stock_symbol)
+    stock_data = user_stock.display_information()
+    return render_template('stockDisplay.html', stock_data = stock_data)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run()

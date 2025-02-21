@@ -215,11 +215,34 @@ class Stock:
     def train_ai_models(self):
 
         #lstm = lstmModel(f'{self.stock_name}_Compound_AI.csv', self.stock_name)
-        rdfst = randomForestModel(f'{self.stock_name}_Compound_AI.csv')
+        #rdfst = randomForestModel(f'{self.stock_name}_Compound_AI.csv')
         #hmm = SARHMM(f'{self.stock_name}_Compound_AI.csv')
-
+        self.display_information()
         self.remove_csv_files()
+        
 
+    def display_information(self):
+        current_price = self.df['Close'].iloc[-1]
+        self.df['Previous_Close'] = pd.to_numeric(self.df['Previous_Close'], errors='coerce')
+        price_change = current_price - self.df['Previous_Close'].iloc[-1]
+        price_percentage_change = (price_change/self.df['Previous_Close'].iloc[-1])*100
+        
+        open_price = self.df['Open'].iloc[-1]
+        high_price = self.df['High'].iloc[-1]
+        low_price = self.df['Low'].iloc[-1]
+        volume = self.df['Volume'].iloc[-1]
+
+        stock_data_dict={
+            "current_price":current_price,
+            "price_change":price_change,
+            "price_change_percentage":price_percentage_change,
+            "open_price":open_price,
+            "high_price":high_price,
+            "low_price":low_price,
+            "volume":volume
+        }
+
+        return stock_data_dict
 
     def initialise(self):
         """

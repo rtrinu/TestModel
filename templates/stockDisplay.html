@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Information</title>
+    <!-- Link to External CSS File -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='displayStyle.css') }}">
+</head>
+<body>
+
+    <h1>Stock Information for {{ stock.upper() }}</h1>
+
+    <div class="stock-info">
+        <div class="data-item">
+            <strong>Current Price:</strong> ${{ stock_data['current_price'] }}
+        </div>
+        <div class="data-item">
+            <strong>Price Change:</strong> ${{ stock_data['price_change'] }} 
+            ({{ stock_data['price_percentage_change'] }}%)
+        </div>
+        <div class="data-item">
+            <strong>Open Price:</strong> ${{ stock_data['open_price'] }}
+        </div>
+        <div class="data-item">
+            <strong>High Price:</strong> ${{ stock_data['high_price'] }}
+        </div>
+        <div class="data-item">
+            <strong>Low Price:</strong> ${{ stock_data['low_price'] }}
+        </div>
+        <div class="data-item">
+            <strong>Close Price:</strong> ${{ stock_data['close_price'] }}
+        </div>
+        <div class="data-item">
+            <strong>Volume:</strong> {{ stock_data['volume'] }}
+        </div>
+        <div class="data-item">
+            <strong>Market Cap:</strong> ${{ stock_data['market_cap'] }}
+        </div>
+        <div class="data-item">
+            <strong>52 Week High:</strong> ${{ stock_data['high_52week'] }}
+        </div>
+        <div class="data-item">
+            <strong>52 Week Low:</strong> ${{ stock_data['low_52week'] }}
+        </div>
+        {% if stock_data['dividend_yield'] %}
+        <div class="data-item">
+            <strong>Dividend Yield:</strong> {{ stock_data['dividend_yield'] }}%
+        </div>
+        {% else %}
+        <div class="data-item">
+            <strong>Dividend Yield:</strong> Not available
+        </div>
+        {% endif %}
+    </div>
+
+</body>
+</html>
